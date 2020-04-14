@@ -18,12 +18,15 @@ package io.fabric8.quickstarts.camel;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -430,21 +433,24 @@ public class Application extends SpringBootServletInitializer {
                             System.out.println(results);
                             io.fabric8.quickstarts.camel.voice.Result output = new io.fabric8.quickstarts.camel.voice.Result();
                             ArrayList<VoiceSession>  resulted = new ArrayList<VoiceSession>();
-                            VoiceSession atiato = new VoiceSession();
+                            
                             String response = null;
                             if (!results.isEmpty()) {
                                 System.out.println("size"+results.size());
 
                                 for (int i = 0; i < results.size(); i++) {
                                     Map out = (Map) results.get(i);
-                                    
+                                    VoiceSession atiato = new VoiceSession();
                                     atiato.setVoiceid((String)out.get("session_voice"));
                                     atiato.setCreation_date((String)out.get("creation_date").toString());
-
+                                    System.out.println(""+atiato.getVoiceid()+atiato.getCreation_date());
+                                    
                                     resulted.add(atiato);
+
 
                                 }
                                 output.setResult(resulted);
+
                                 output.setStatus("success");
                             }
                             exchange.getIn().setBody(output);
@@ -458,8 +464,16 @@ public class Application extends SpringBootServletInitializer {
                   .endRest();
 
             rest("download/{filename}").get().produces(MediaType.APPLICATION_OCTET_STREAM_VALUE).route()
-                    .routeId("downloadFile").pollEnrich()
-                    .simple("file:/Users/omar/Downloads/elearn?fileName=${header.filename}&noop=true").timeout(5000)
+                    .routeId("downloadFile")
+                    .process(new Processor() {
+                        public void process(Exchange exchange) throws Exception {
+                             File file = new File("/Users/omar/Downloads/elearn/"+exchange.getIn().getHeader("filename"));
+                            byte[] data = org.apache.commons.io.FileUtils.readFileToByteArray(file);
+
+                             exchange.getIn().setBody(data);
+                        }
+                    })
+                  //  .to("file:/Users/omar/Downloads/elearn?fileName=${header.filename}&noop=true")
                     .setHeader("Content-Disposition", simple("attachment;filename=${header.filename}")).endRest();
             rest("getcontentvoice/").get().produces("application/json").param().name("data").type(RestParamType.query)
                     .dataType("String").endParam().route().routeId("getvoicecontent")
@@ -490,7 +504,7 @@ public class Application extends SpringBootServletInitializer {
                   //  .to("sql:select session_voice from session_content_voice where session_title =:#${header.session_title} and foreign_session_image=:#${header.image_id}?"
                   //          + "dataSource=dataSource")
                 .log("${body}").pollEnrich()
-                    .simple("file:/Users/omar/Downloads/elearn?fileName=${header.filename}&noop=true").timeout(5000)
+                    .simple("file:/Users/omar/Downloads/elearn?fileName=${header.filename}&noop=true").timeout(1000000)
                     // .marshal().base64()
                     .process(new Processor() {
                         public void process(Exchange exchange) throws Exception {
