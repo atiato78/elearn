@@ -8,6 +8,7 @@ public class VoiceSession {
 
     private String voiceid; 
     private String creation_date;
+    private Integer duration;
 
     public String getVoiceid() {
         return voiceid;
@@ -25,7 +26,13 @@ public class VoiceSession {
         this.creation_date = creation_date;
     }
 
+    public Integer getDuration() {
+        return duration;
+    }
 
+    public void setDuration(Integer duration) {
+        this.duration = duration;
+    }
 
   
 

@@ -88,6 +88,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+import io.fabric8.quickstarts.camel.instructor.Params;
 import io.fabric8.quickstarts.camel.pojo.Root;
 import io.fabric8.quickstarts.camel.pojo.UnAuthorize;
 import io.fabric8.quickstarts.camel.voice.Result;
@@ -197,7 +198,8 @@ public class Application extends SpringBootServletInitializer {
 
                         }
                     }).log("${header.username}").log("${header.password}")
-                    .to("sql:select * from user where username =:#${header.username} and password=:#${header.password}?"
+                   
+                    .to("sql:select u.id as user_id, u.name as user_name, u.username as user_username, u.status as user_status, u.logo, u.type as user_type, c.class_name, c.class_section, u.foreign_class_id from user u, classes c where u.username=:#${header.username} and password=:#${header.password} and u.foreign_class_id=c.id?"
                             + "dataSource=dataSource")
 
                     .log("${body}").process(new Processor() {
@@ -208,41 +210,77 @@ public class Application extends SpringBootServletInitializer {
                             if (!results.isEmpty()) {
 
                                 Map out = (Map) results.get(0);
-                                exchange.getIn().setHeader("name", out.get("name"));
-                                exchange.getIn().setHeader("username", out.get("username"));
+                                exchange.getIn().setHeader("user_id", out.get("user_id"));
+                                exchange.getIn().setHeader("user_name", out.get("user_name"));
 
-                                exchange.getIn().setHeader("classss", out.get("class"));
+                                exchange.getIn().setHeader("user_username", out.get("user_username"));
+                                exchange.getIn().setHeader("user_status", out.get("user_status"));
+                                exchange.getIn().setHeader("user_type", out.get("user_type"));
                                 exchange.getIn().setHeader("logo", out.get("logo"));
+
+
                                 exchange.getIn().setHeader("status", "success");
+
                                 // JSONObject response = new
                                 // JSONObject("{"+"\"name\":\""+exchange.getIn().getHeader("name")+"\","+"\"logo\":\""+exchange.getIn().getHeader("logo")+"\","+"\"classss\":\""+exchange.getIn().getHeader("classss")+"\","+"\"status\":\""+exchange.getIn().getHeader("status")+"\""+"}");
                                 // JSONArray out1= new JSONArray();
                                 // out1.put(response);
-                                response = "{" + "\"name\":\"" + exchange.getIn().getHeader("name") + "\","
-                                        + "\"logo\":\"" + exchange.getIn().getHeader("logo") + "\"," + "\"classss\":\""
-                                        + exchange.getIn().getHeader("classss") + "\"," + "\"status\":\""
-                                        + exchange.getIn().getHeader("status") + "\"," + "\"username\":\""
-                                        + exchange.getIn().getHeader("username") + "\"" + "}";
+                                response = "{" + "\"user_id\":\"" + exchange.getIn().getHeader("user_id") + "\","
+                                        + "\"user_name\":\"" + exchange.getIn().getHeader("user_name") + "\"," + "\"user_username\":\""
+                                        + exchange.getIn().getHeader("user_username") + "\"," + "\"user_status\":\""
+                                        + exchange.getIn().getHeader("user_status") + "\"," + "\"logo\":\""
+                                        + exchange.getIn().getHeader("logo") 
+                                        +"\","+ "\"user_type\":\""
+                                        + exchange.getIn().getHeader("user_type") + "\""
+                                        
+                                        + "}";
                             }
                             exchange.getIn().setBody(response);
 
                         }
                     }).log("${body}").choice().when(body().isNotNull()).unmarshal()
-                    .json(JsonLibrary.Jackson, Params.class).log("${body}").end()
+                    .json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Params.class).log("${body}")
+                    .process(new Processor() {
+
+                        @Override
+                        public void process(Exchange exchange) throws Exception {
+                            io.fabric8.quickstarts.camel.login.Params body = exchange.getIn().getBody(io.fabric8.quickstarts.camel.login.Params.class);
+                            io.fabric8.quickstarts.camel.login.Result result= new io.fabric8.quickstarts.camel.login.Result();
+                            result.setResult(body);
+                            result.setStatus("success");
+                            // TODO Auto-generated method stub
+                            // JSONArray out1= new JSONArray();
+                            // out1.put(test);
+                            // exchange.getIn().setBody(out1.toString());
+                            exchange.getIn().setBody(result);
+
+                        }
+                    })
+                    
+                    
+                    
+                    
+                    
+                    .end()
+
 
                     .choice().when(simple("${header.status} != 'success'")).process(new Processor() {
 
                         @Override
                         public void process(Exchange exchange) throws Exception {
                             // TODO Auto-generated method stub
-                            String test = "{" + "\"status\":\"failed\"}";
+                            io.fabric8.quickstarts.camel.login.Result result= new io.fabric8.quickstarts.camel.login.Result();
+                          //  io.fabric8.quickstarts.camel.login.Params out = new io.fabric8.quickstarts.camel.login.Params();
+                            result.setResult(null);
+                            result.setStatus("failed");
                             // JSONArray out1= new JSONArray();
                             // out1.put(test);
                             // exchange.getIn().setBody(out1.toString());
-                            exchange.getIn().setBody(test);
+                            exchange.getIn().setBody(result);
 
                         }
-                    }).unmarshal().json(JsonLibrary.Jackson, Status.class)
+                    }).marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Result.class)
+                    .unmarshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Result.class)
 
                     .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
 
@@ -274,9 +312,13 @@ public class Application extends SpringBootServletInitializer {
 
                     // }
                     // })
-                    .endRest().get("session_info/").description("The e-learning for specified currency").param()
+                    .endRest()
+                    
+                    
+                    
+                    .get("getimagesforchapter/").description("The e-learning for specified currency").param()
                     .name("data").type(RestParamType.query).dataType("String").endParam().route()
-                    .routeId("session_info").to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
+                    .routeId("Getimagesforchapter ").to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
                     .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
 
                     // .marshal().json(JsonLibrary.Jackson,Params.class)
@@ -288,9 +330,13 @@ public class Application extends SpringBootServletInitializer {
                             String results = exchange.getIn().getBody(String.class);
                             JSONArray jsonObject = new JSONArray(results);
                             // Map out=(Map) results.get(0);
-                            System.out.println(jsonObject.getJSONObject(0).getString("session_title"));
-                            exchange.getIn().setHeader("session_title",
-                                    jsonObject.getJSONObject(0).getString("session_title"));
+                            System.out.println(jsonObject.getJSONObject(0).getString("class_id"));
+                            exchange.getIn().setHeader("class_id",
+                                    jsonObject.getJSONObject(0).getString("class_id"));
+                                    exchange.getIn().setHeader("material_id",
+                                    jsonObject.getJSONObject(0).getString("material_id"));
+                                    exchange.getIn().setHeader("chapter_id",
+                                    jsonObject.getJSONObject(0).getString("chapter_id"));
                             // exchange.getIn().setHeader("username",
                             // jsonObject.getJSONObject(0).getString("username"));
 
@@ -298,21 +344,48 @@ public class Application extends SpringBootServletInitializer {
 
                         }
                     }).log("${header.session_title}")
-                    .to("sql:select session_title,image_title,session_image from session_content where session_title =:#${header.session_title}?"
-                            + "dataSource=dataSource&" + "outputClass=io.fabric8.quickstarts.camel.ImageSession")
+                    .to("sql:select * from session_content_images where foreign_class_id=:#${header.class_id} and foreign_material_id=:#${header.material_id} and foreign_chapter_id=:#${header.chapter_id} order by id desc?"
+                            + "dataSource=dataSource")
                     .process(new Processor() {
                         public void process(Exchange exchange) throws Exception {
                             ArrayList results = exchange.getIn().getBody(ArrayList.class);
-                            Result test = new Result();
-                            // results.(ImageSession);
-                            test.setResult(results);
-                            exchange.getIn().setBody(test);
+                            System.out.println(results);
+                            io.fabric8.quickstarts.camel.Images.Result output = new io.fabric8.quickstarts.camel.Images.Result();
+                            ArrayList<io.fabric8.quickstarts.camel.Images.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.Images.Params>();
+                            
+                            String response = null;
+                            if (!results.isEmpty()) {
+                                System.out.println("size"+results.size());
+
+                                for (int i = 0; i < results.size(); i++) {
+                                    Map out = (Map) results.get(i);
+                                    io.fabric8.quickstarts.camel.Images.Params params = new io.fabric8.quickstarts.camel.Images.Params();
+                                    params.setImage_id((Integer)out.get("id"));
+                                    params.setCreation_date((String)out.get("creation_date").toString());
+                                    params.setImage_title((String)out.get("image_title"));
+                                    params.setSessionimage((String)out.get("session_image"));
+
+
+                                    
+                                    resulted.add(params);
+
+
+                                }
+                                output.setResult(resulted);
+
+                                output.setStatus("success");
+                            }
+                            exchange.getIn().setBody(output);
 
                         }
-                    }).log("${body}")
+
+                        
+                    })
+                    .log("${body}").marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.Images.Result.class)
+                    .unmarshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.Images.Result.class)
                     // .log("${header.password}")
                     .endRest();
-            rest("/upload").post().bindingMode(RestBindingMode.off).consumes("multipart/form-data").route()
+            rest("/uploadimage").post().bindingMode(RestBindingMode.off).consumes("multipart/form-data").route()
                     .routeId("upload_info")
 
                     .process(new Processor() {
@@ -331,13 +404,18 @@ public class Application extends SpringBootServletInitializer {
                             exchange.getIn().setHeader(Exchange.FILE_NAME, dro.getName());
                             exchange.getIn().setBody(dro.getInputStream());
 
-                            String session_title = test.getParameters().get("session_title");
+                            String class_id = test.getParameters().get("class_id");
+                            String material_id = test.getParameters().get("material_id");
+                            String chapter_id = test.getParameters().get("chapter_id");
                             String image_title = test.getParameters().get("image_title");
                             System.out.println(String.format("Body Content-Type: \n  session_title %s\n image_title %s",
-                                    session_title, image_title));
+                            class_id, material_id));
                             exchange.getIn().setHeader("filename", dro.getName());
-                            exchange.getIn().setHeader("session_title", session_title);
+                            exchange.getIn().setHeader("class_id", class_id);
                             exchange.getIn().setHeader("image_title", image_title);
+                            exchange.getIn().setHeader("chapter_id", chapter_id);
+                            exchange.getIn().setHeader("material_id", material_id);
+                            
 
                             exchange.getIn().setBody(dro.getInputStream());
 
@@ -345,8 +423,8 @@ public class Application extends SpringBootServletInitializer {
                     })
 
                     .to("file:/Users/omar/Downloads/elearn")
-                    .to("sql:insert into session_content (session_title,image_title,session_image) values "
-                            + "(:#${header.session_title} , :#${header.image_title},:#${header.filename})?"
+                    .to("sql:insert into session_content_images (foreign_class_id,foreign_material_id,foreign_chapter_id,image_title,session_image) values "
+                            + "(:#${header.class_id} , :#${header.material_id},:#${header.chapter_id},:#${header.image_title},:#${header.filename})?"
                             + "dataSource=dataSource")
                     .to("direct:start")
 
@@ -366,7 +444,7 @@ public class Application extends SpringBootServletInitializer {
                             MultiPartStringParser test = new MultiPartStringParser(theString);
                             MimeBodyPart mimeMessage1 = new MimeBodyPart(clone1);
                             DataHandler dro = mimeMessage1.getDataHandler();
-                            String voice64 = test.getParameters().get("voice64");
+                         //   String voice64 = test.getParameters().get("voice64");
                             System.out.println("voice64ttttt " + dro.getContent());
 
                             InputStream myInputStream = new ByteArrayInputStream(
@@ -374,23 +452,53 @@ public class Application extends SpringBootServletInitializer {
                             // System.out.println("filename " + dro.getName());
                             exchange.getIn().setBody(myInputStream);
 
-                            String session_title = test.getParameters().get("session_title");
+                            String class_name = test.getParameters().get("class_name");
+                            String class_section = test.getParameters().get("class_section");
+                            String class_id = test.getParameters().get("class_id");
+                            String material_id = test.getParameters().get("material_id");
+                            String chapter_id = test.getParameters().get("chapter_id");
+                            String material_name = test.getParameters().get("material_name");
+                            String chapter_subject = test.getParameters().get("chapter_subject");
+                            String chapter_number = test.getParameters().get("chapter_number");
+                            String session_image = test.getParameters().get("session_image");
+                            String filename = dro.getName();
                             String image_id = test.getParameters().get("image_id");
+                            String image_title = test.getParameters().get("image_title");
+                            String duration = test.getParameters().get("duration");
+
+                            //voice_id
+
                             String voice_id = test.getParameters().get("voice_id");
 
-                            System.out.println(String.format(
-                                    "Body Content-Type: \n  session_title %s\n image_id %s \n voice_id %s",
-                                    session_title, image_id, voice_id));
-                            String[] filename_split = voice_id.split("\\$");
-                            for (int i = 0; i < filename_split.length; i++)
-                                System.out.println("mambo\n " + i + " try " + filename_split[i]);
 
-                            exchange.getIn().setHeader("filename", voice_id);
-                            exchange.getIn().setHeader(Exchange.FILE_NAME, filename_split[1]);
 
-                            exchange.getIn().setHeader("session_title", session_title);
-                            exchange.getIn().setHeader("image_title", image_id);
-                            exchange.getIn().setHeader("session_voice", voice_id);
+
+
+
+
+
+                          
+
+                            exchange.getIn().setHeader("filename", filename);
+                            exchange.getIn().setHeader(Exchange.FILE_NAME, filename);
+
+                            exchange.getIn().setHeader("class_name", class_name);
+                            exchange.getIn().setHeader("class_section", class_section);
+                            exchange.getIn().setHeader("class_id", class_id);
+
+                            exchange.getIn().setHeader("material_id", material_id);
+                            exchange.getIn().setHeader("chapter_id", chapter_id);
+                            exchange.getIn().setHeader("material_name", material_name);
+
+                            exchange.getIn().setHeader("chapter_subject", chapter_subject);
+                            exchange.getIn().setHeader("chapter_number", chapter_number);
+                            exchange.getIn().setHeader("session_image", session_image);
+
+                            exchange.getIn().setHeader("image_id", image_id);
+                            exchange.getIn().setHeader("image_title", image_title);
+                            exchange.getIn().setHeader("duration", duration);
+                            exchange.getIn().setHeader("voice_id", voice_id);
+
                             // InputStream myInputStream = new
                             // ByteArrayInputStream(Base64.decodeBase64(theString));
 
@@ -400,14 +508,14 @@ public class Application extends SpringBootServletInitializer {
                     })
 
                     .to("file:/Users/omar/Downloads/elearn")
-                    .to("sql:insert into session_content_voice (session_title,foreign_session_image,session_voice) values "
-                            + "(:#${header.session_title} , :#${header.image_title},:#${header.filename})?"
+                    .to("sql:insert into session_content_voices (foreign_class_id,foreign_material_id,foreign_chapter_id,foreign_image_id,session_voice,duration) values "
+                            + "(:#${header.class_id} , :#${header.material_id},:#${header.chapter_id},:#${header.image_id},:#${header.filename},:#${header.duration})?"
                             + "dataSource=dataSource")
 
                     .to("direct:start").endRest();
 
-            rest("/getvoiceids").get().bindingMode(RestBindingMode.off).produces("application/json").param()
-                    .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("getvoiceids")
+            rest("/getvoicesidforimage").get().bindingMode(RestBindingMode.off).produces("application/json").param()
+                    .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("Getvoicesidforimage")
                     .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
                     .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
                     .process(new Processor() {
@@ -415,16 +523,18 @@ public class Application extends SpringBootServletInitializer {
                             String results = exchange.getIn().getBody(String.class);
                             JSONArray jsonObject = new JSONArray(results);
                             // Map out=(Map) results.get(0);
-                            System.out.println(jsonObject.getJSONObject(0).getString("session_title"));
-                            exchange.getIn().setHeader("session_title",
-                                    jsonObject.getJSONObject(0).getString("session_title"));
+                            System.out.println(jsonObject.getJSONObject(0).getString("class_id"));
+                            exchange.getIn().setHeader("class_id",
+                                    jsonObject.getJSONObject(0).getString("class_id"));
+                            exchange.getIn().setHeader("material_id", jsonObject.getJSONObject(0).getString("material_id"));
+                            exchange.getIn().setHeader("chapter_id", jsonObject.getJSONObject(0).getString("chapter_id"));
                             exchange.getIn().setHeader("image_id", jsonObject.getJSONObject(0).getString("image_id"));
 
                             // exchange.getIn().setHeader("password", out.get("password"));
 
                         }
                     }).log("${header.session_title}")
-                    .to("sql:select session_voice,creation_date from session_content_voice where session_title =:#${header.session_title} and foreign_session_image=:#${header.image_id}?"
+                    .to("sql:select * from session_content_voices where foreign_class_id=:#${header.class_id} and foreign_material_id=:#${header.material_id} and foreign_chapter_id=:#${header.chapter_id} and foreign_image_id=:#${header.image_id}?"
                             + "dataSource=dataSource")
 
                     .process(new Processor() {
@@ -440,12 +550,14 @@ public class Application extends SpringBootServletInitializer {
 
                                 for (int i = 0; i < results.size(); i++) {
                                     Map out = (Map) results.get(i);
-                                    VoiceSession atiato = new VoiceSession();
-                                    atiato.setVoiceid((String)out.get("session_voice"));
-                                    atiato.setCreation_date((String)out.get("creation_date").toString());
-                                    System.out.println(""+atiato.getVoiceid()+atiato.getCreation_date());
+                                    VoiceSession params = new VoiceSession();
+                                    params.setVoiceid((String)out.get("session_voice"));
+                                    params.setCreation_date((String)out.get("creation_date").toString());
+                                    params.setDuration((Integer)out.get("duration"));
+
+                                    System.out.println(""+params.getVoiceid()+params.getCreation_date());
                                     
-                                    resulted.add(atiato);
+                                    resulted.add(params);
 
 
                                 }
@@ -462,6 +574,246 @@ public class Application extends SpringBootServletInitializer {
                     .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
 
                   .endRest();
+
+                rest("/getintructorclassesandmaterials").get().bindingMode(RestBindingMode.off).produces("application/json").param()
+                  .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("getintructorclassesandmaterials")
+                  .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
+                  .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
+                  .process(new Processor() {
+                      public void process(Exchange exchange) throws Exception {
+                          String results = exchange.getIn().getBody(String.class);
+                          JSONArray jsonObject = new JSONArray(results);
+                          // Map out=(Map) results.get(0);
+                          System.out.println(jsonObject.getJSONObject(0).getString("instructor_id"));
+                          exchange.getIn().setHeader("instructor_id",
+                                  jsonObject.getJSONObject(0).getString("instructor_id"));
+
+                          // exchange.getIn().setHeader("password", out.get("password"));
+
+                      }
+                  }).log("${header.instructor_id}")
+                  .to("sql:select m.id as material_id, m.material_name, m.lang, m.cover_image, c.id as class_id, c.class_name, c.class_section from materials m,classes c where m.id in (select foreign_material_id from materials_instructors where foreign_instructor_id=:#${header.instructor_id}) and c.id in (select foreign_class_id from materials_instructors where foreign_instructor_id=:#${header.instructor_id} and foreign_material_id=m.id)?"
+                          + "dataSource=dataSource")
+
+                  .process(new Processor() {
+                      public void process(Exchange exchange) throws Exception {
+                        ArrayList results = exchange.getIn().getBody(ArrayList.class);
+                        System.out.println(results);
+                        io.fabric8.quickstarts.camel.instructor.Result output = new io.fabric8.quickstarts.camel.instructor.Result();
+                        ArrayList<io.fabric8.quickstarts.camel.instructor.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.instructor.Params>();
+                        
+                        String response = null;
+                        if (!results.isEmpty()) {
+                            System.out.println("size"+results.size());
+
+                            for (int i = 0; i < results.size(); i++) {
+                                Map out = (Map) results.get(i);
+                                io.fabric8.quickstarts.camel.instructor.Params params = new io.fabric8.quickstarts.camel.instructor.Params();
+                                params.setMaterial_id((Integer)out.get("material_id"));
+                                params.setMaterial_name((String)out.get("material_name"));
+                                params.setLang((String)out.get("lang"));
+                                params.setCover_image((String)out.get("cover_image"));
+                                params.setClass_id((Integer)out.get("class_id"));
+
+                                params.setClass_name((String)out.get("class_name"));
+                                params.setClass_section((String)out.get("class_section"));
+
+                                System.out.println(""+params.getClass_name()+params.getMaterial_name());
+                                
+                                resulted.add(params);
+
+
+                            }
+                            output.setResult(resulted);
+
+                            output.setStatus("success");
+                        }
+                        exchange.getIn().setBody(output);
+
+                      }
+                  })
+                  .log("${body}").marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.instructor.Result.class)
+
+                  .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
+
+                .endRest();
+
+                      rest("/getstudentmaterials").get().bindingMode(RestBindingMode.off).produces("application/json").param()
+                  .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("Getstudentmaterials")
+                  .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
+                  .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
+                  .process(new Processor() {
+                      public void process(Exchange exchange) throws Exception {
+                          String results = exchange.getIn().getBody(String.class);
+                          JSONArray jsonObject = new JSONArray(results);
+                          // Map out=(Map) results.get(0);
+                          System.out.println(jsonObject.getJSONObject(0).getString("class_id"));
+                          exchange.getIn().setHeader("class_id",
+                                  jsonObject.getJSONObject(0).getString("class_id"));
+
+                          // exchange.getIn().setHeader("password", out.get("password"));
+
+                      }
+                  }).log("${header.instructor_id}")
+                  .to("sql:select m.id as material_id, m.material_name, m.lang, m.cover_image, u.id as instructor_id, u.name as instructor_name from materials m, user u, materials_instructors mi where m.id = mi.foreign_material_id and mi.foreign_class_id=:#${header.class_id} and u.id in (select foreign_instructor_id from materials_instructors where foreign_class_id=:#${header.class_id} and foreign_material_id=m.id)?"
+                          + "dataSource=dataSource")
+
+                  .process(new Processor() {
+                      public void process(Exchange exchange) throws Exception {
+                        ArrayList results = exchange.getIn().getBody(ArrayList.class);
+                        System.out.println(results);
+                        io.fabric8.quickstarts.camel.materials.Result output = new io.fabric8.quickstarts.camel.materials.Result();
+                        ArrayList<io.fabric8.quickstarts.camel.materials.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.materials.Params>();
+                        
+                        String response = null;
+                        if (!results.isEmpty()) {
+                            System.out.println("size"+results.size());
+
+                            for (int i = 0; i < results.size(); i++) {
+                                Map out = (Map) results.get(i);
+                                io.fabric8.quickstarts.camel.materials.Params params = new io.fabric8.quickstarts.camel.materials.Params();
+                                params.setMaterial_id((Integer)out.get("material_id"));
+                                params.setMaterial_name((String)out.get("material_name"));
+                                params.setLang((String)out.get("lang"));
+                                params.setCover_image((String)out.get("cover_image"));
+                                params.setInstructor_id((Integer)out.get("instructor_id"));
+
+                                params.setInstructor_name((String)out.get("instructor_name"));
+
+                                System.out.println(""+params.getInstructor_name()+params.getMaterial_name());
+                                
+                                resulted.add(params);
+
+
+                            }
+                            output.setResult(resulted);
+
+                            output.setStatus("success");
+                        }
+                        exchange.getIn().setBody(output);
+
+                      }
+                  })
+                  .log("${body}").marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.materials.Result.class)
+
+                  .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
+
+                .endRest();
+
+
+
+                rest("/getchapters").get().bindingMode(RestBindingMode.off).produces("application/json").param()
+                .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("Getchapters")
+                .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
+                .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
+                .process(new Processor() {
+                    public void process(Exchange exchange) throws Exception {
+                        String results = exchange.getIn().getBody(String.class);
+                        JSONArray jsonObject = new JSONArray(results);
+                        // Map out=(Map) results.get(0);
+                        System.out.println(jsonObject.getJSONObject(0).getString("class_id"));
+                        exchange.getIn().setHeader("class_id",
+                                jsonObject.getJSONObject(0).getString("class_id"));
+                                exchange.getIn().setHeader("material_id",
+                                jsonObject.getJSONObject(0).getString("material_id"));
+
+                        // exchange.getIn().setHeader("password", out.get("password"));
+
+                    }
+                }).log("${header.class_id}")
+                .to("sql:select * from chapters where foreign_material_id=:#${header.material_id}  and foreign_class_id=:#${header.class_id}  order by id asc?"
+                        + "dataSource=dataSource")
+
+                .process(new Processor() {
+                    public void process(Exchange exchange) throws Exception {
+                      ArrayList results = exchange.getIn().getBody(ArrayList.class);
+                      System.out.println(results);
+                      io.fabric8.quickstarts.camel.chapters.Result output = new io.fabric8.quickstarts.camel.chapters.Result();
+                      ArrayList<io.fabric8.quickstarts.camel.chapters.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.chapters.Params>();
+                      
+                      String response = null;
+                      if (!results.isEmpty()) {
+                          System.out.println("size"+results.size());
+
+                          for (int i = 0; i < results.size(); i++) {
+                              Map out = (Map) results.get(i);
+                              io.fabric8.quickstarts.camel.chapters.Params params = new io.fabric8.quickstarts.camel.chapters.Params();
+                              params.setChapter_id((Integer)out.get("id"));
+                              params.setChapter_number((String)out.get("chapter_number"));
+                       //       params.setLang((String)out.get("lang"));
+                              params.setChapter_subject((String)out.get("chapter_subject"));
+                              params.setInstructor_id((Integer)out.get("foreign_instructor_id"));
+                              params.setCreation_date((String)out.get("creation_date").toString());
+
+
+
+
+                              System.out.println(""+params.getCreation_date());
+                              
+                              resulted.add(params);
+
+
+                          }
+                          output.setResult(resulted);
+
+                          output.setStatus("success");
+                      }
+                      exchange.getIn().setBody(output);
+
+                    }
+                })
+                .log("${body}").marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.chapters.Result.class)
+
+                .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
+
+              .endRest();
+
+              rest("/createchapter").get().bindingMode(RestBindingMode.off).produces("application/json").param()
+                .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("Createchapter")
+                .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
+                .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
+                .process(new Processor() {
+                    public void process(Exchange exchange) throws Exception {
+                        String results = exchange.getIn().getBody(String.class);
+                        JSONArray jsonObject = new JSONArray(results);
+                        // Map out=(Map) results.get(0);
+                        System.out.println(jsonObject.getJSONObject(0).getString("foreign_instructor_id"));
+                        exchange.getIn().setHeader("foreign_instructor_id",
+                                jsonObject.getJSONObject(0).getString("foreign_instructor_id"));
+                                exchange.getIn().setHeader("foreign_material_id",
+                                jsonObject.getJSONObject(0).getString("foreign_material_id"));
+                                exchange.getIn().setHeader("foreign_class_id",
+                                jsonObject.getJSONObject(0).getString("foreign_class_id")); 
+                                 exchange.getIn().setHeader("chapter_number",
+                                jsonObject.getJSONObject(0).getString("chapter_number")); 
+                                 exchange.getIn().setHeader("chapter_subject",
+                                jsonObject.getJSONObject(0).getString("chapter_subject")); 
+                             
+
+                        // exchange.getIn().setHeader("password", out.get("password"));
+
+                    }
+                })
+                .to("sql:INSERT INTO chapters (foreign_instructor_id , foreign_material_id, foreign_class_id, chapter_number, chapter_subject) VALUES  "
+                            + "(:#${header.foreign_instructor_id} , :#${header.foreign_material_id},:#${header.foreign_class_id},:#${header.chapter_number},:#${header.chapter_subject} )?"
+                            + "dataSource=dataSource")
+
+                .process(new Processor() {
+                    public void process(Exchange exchange) throws Exception {
+
+                        String state = "{" + "\"status\":\"success\"}";
+
+                      exchange.getIn().setBody(state);
+                    }
+                })
+                .log("${body}").unmarshal().json(JsonLibrary.Jackson, Status.class)
+                .marshal().json(JsonLibrary.Jackson, Status.class)
+
+             //   .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
+
+              .endRest();
+
+
 
             rest("download/{filename}").get().produces(MediaType.APPLICATION_OCTET_STREAM_VALUE).route()
                     .routeId("downloadFile")
@@ -490,11 +842,11 @@ public class Application extends SpringBootServletInitializer {
                             JSONArray jsonObject = new JSONArray(results);
                             // Map out=(Map) results.get(0);
                             // System.out.println(jsonObject.getJSONObject(0).getString("username"));
-                            String[] filename_split = jsonObject.getJSONObject(0).getString("voice_id").split("\\$");
-                            for (int i = 0; i < filename_split.length; i++)
-                                System.out.println("mambo\n " + i + " try " + filename_split[i]);
-                            exchange.getIn().setHeader("filename",filename_split[1]
-                                    );
+                            String filename_split = jsonObject.getJSONObject(0).getString("voice_id");
+                            // for (int i = 0; i < filename_split.length; i++)
+                            //     System.out.println("mambo\n " + i + " try " + filename_split[i]);
+                             exchange.getIn().setHeader("filename",filename_split
+                                     );
                        //     exchange.getIn().setHeader("image_id", jsonObject.getJSONObject(0).getString("image_id"));
 
                             // exchange.getIn().setHeader("password", out.get("password"));
@@ -551,7 +903,7 @@ public class Application extends SpringBootServletInitializer {
 
                     Upload test = new Upload();
                     test.setMessage("Upload and move success");
-                    test.setSuccess(true);
+                    test.setStatus("success");
 
                     exchange.getIn().setBody(test);
 
