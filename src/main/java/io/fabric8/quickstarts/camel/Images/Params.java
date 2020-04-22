@@ -39,11 +39,11 @@ public class Params {
 
    
 
-    public String getSessionimage() {
+    public String getSession_image() {
         return session_image;
     }
 
-    public void setSessionimage(String session_image) {
+    public void setSession_image(String session_image) {
         this.session_image = session_image;
     }
 

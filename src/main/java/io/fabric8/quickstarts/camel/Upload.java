@@ -2,14 +2,14 @@ package io.fabric8.quickstarts.camel;
 
 public class Upload {
 
-    private String success;
+    private Boolean success;
     private String message;
 
-    public void setStatus(String success) {
+    public void setSuccess(Boolean success) {
         this.success = success;
     }
 
-    public String getStatus() {
+    public Boolean getSuccess() {
         return success;
     }
 

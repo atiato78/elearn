@@ -176,7 +176,9 @@ public class Application extends SpringBootServletInitializer {
                             // }
 
                         }
-                    }).endRest().get("elearningapp/").description("The e-learning for specified currency").param()
+                    }).endRest()
+                    
+                    .get("elearningapp/").description("The e-learning for specified currency").param()
                     .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("elearning")
                     .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
                     .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
@@ -206,56 +208,54 @@ public class Application extends SpringBootServletInitializer {
                         public void process(Exchange exchange) throws Exception {
                             ArrayList results = exchange.getIn().getBody(ArrayList.class);
                             System.out.println(results);
+                            io.fabric8.quickstarts.camel.login.Result output = new io.fabric8.quickstarts.camel.login.Result();
+                            ArrayList<io.fabric8.quickstarts.camel.login.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.login.Params>();
+                            
                             String response = null;
                             if (!results.isEmpty()) {
+                                System.out.println("size"+results.size());
 
-                                Map out = (Map) results.get(0);
-                                exchange.getIn().setHeader("user_id", out.get("user_id"));
-                                exchange.getIn().setHeader("user_name", out.get("user_name"));
+                                for (int i = 0; i < results.size(); i++) {
+                                    Map out = (Map) results.get(i);
+                                    io.fabric8.quickstarts.camel.login.Params params = new io.fabric8.quickstarts.camel.login.Params();
+                                  
+                                    params.setUser_id((Integer)out.get("user_id"));
+                                    exchange.getIn().setHeader("user_name", out.get("user_name"));
+                                    params.setUser_name((String)out.get("user_name"));
+                                    params.setUser_username((String)out.get("user_username"));
+                                    params.setUser_status((String)out.get("user_status"));
+                                    params.setUser_type((String)out.get("user_type"));
+                                    
+                                    params.setClass_name((String)out.get("class_name"));
+                                    params.setClass_section((String)out.get("class_section"));
+                                    params.setLogo((String)out.get("logo"));
+                                    params.setUser_class_id((Integer)out.get("foreign_class_id"));
 
-                                exchange.getIn().setHeader("user_username", out.get("user_username"));
-                                exchange.getIn().setHeader("user_status", out.get("user_status"));
-                                exchange.getIn().setHeader("user_type", out.get("user_type"));
-                                exchange.getIn().setHeader("logo", out.get("logo"));
+
+    
+    
+                                    exchange.getIn().setHeader("status", "success");
+                                  
+    
+
+                                    
+                                    resulted.add(params);
 
 
-                                exchange.getIn().setHeader("status", "success");
+                                }
+                                output.setResult(resulted);
 
-                                // JSONObject response = new
-                                // JSONObject("{"+"\"name\":\""+exchange.getIn().getHeader("name")+"\","+"\"logo\":\""+exchange.getIn().getHeader("logo")+"\","+"\"classss\":\""+exchange.getIn().getHeader("classss")+"\","+"\"status\":\""+exchange.getIn().getHeader("status")+"\""+"}");
-                                // JSONArray out1= new JSONArray();
-                                // out1.put(response);
-                                response = "{" + "\"user_id\":\"" + exchange.getIn().getHeader("user_id") + "\","
-                                        + "\"user_name\":\"" + exchange.getIn().getHeader("user_name") + "\"," + "\"user_username\":\""
-                                        + exchange.getIn().getHeader("user_username") + "\"," + "\"user_status\":\""
-                                        + exchange.getIn().getHeader("user_status") + "\"," + "\"logo\":\""
-                                        + exchange.getIn().getHeader("logo") 
-                                        +"\","+ "\"user_type\":\""
-                                        + exchange.getIn().getHeader("user_type") + "\""
-                                        
-                                        + "}";
+                                output.setStatus("success");
                             }
-                            exchange.getIn().setBody(response);
+                            exchange.getIn().setBody(output);
+
+                        
 
                         }
-                    }).log("${body}").choice().when(body().isNotNull()).unmarshal()
-                    .json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Params.class).log("${body}")
-                    .process(new Processor() {
+                    }).log("${body}").choice().when(body().isNotNull())
+                    .marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Result.class).log("${body}")
+                    .unmarshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Result.class)
 
-                        @Override
-                        public void process(Exchange exchange) throws Exception {
-                            io.fabric8.quickstarts.camel.login.Params body = exchange.getIn().getBody(io.fabric8.quickstarts.camel.login.Params.class);
-                            io.fabric8.quickstarts.camel.login.Result result= new io.fabric8.quickstarts.camel.login.Result();
-                            result.setResult(body);
-                            result.setStatus("success");
-                            // TODO Auto-generated method stub
-                            // JSONArray out1= new JSONArray();
-                            // out1.put(test);
-                            // exchange.getIn().setBody(out1.toString());
-                            exchange.getIn().setBody(result);
-
-                        }
-                    })
                     
                     
                     
@@ -283,6 +283,7 @@ public class Application extends SpringBootServletInitializer {
                     .unmarshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Result.class)
 
                     .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
+                    .end()
 
                     /*
                      * .process(new Processor() { public void process(Exchange exchange) throws
@@ -330,13 +331,13 @@ public class Application extends SpringBootServletInitializer {
                             String results = exchange.getIn().getBody(String.class);
                             JSONArray jsonObject = new JSONArray(results);
                             // Map out=(Map) results.get(0);
-                            System.out.println(jsonObject.getJSONObject(0).getString("class_id"));
+                            System.out.println(jsonObject.getJSONObject(0).getInt("class_id"));
                             exchange.getIn().setHeader("class_id",
-                                    jsonObject.getJSONObject(0).getString("class_id"));
+                                    jsonObject.getJSONObject(0).getInt("class_id"));
                                     exchange.getIn().setHeader("material_id",
-                                    jsonObject.getJSONObject(0).getString("material_id"));
+                                    jsonObject.getJSONObject(0).getInt("material_id"));
                                     exchange.getIn().setHeader("chapter_id",
-                                    jsonObject.getJSONObject(0).getString("chapter_id"));
+                                    jsonObject.getJSONObject(0).getInt("chapter_id"));
                             // exchange.getIn().setHeader("username",
                             // jsonObject.getJSONObject(0).getString("username"));
 
@@ -363,7 +364,7 @@ public class Application extends SpringBootServletInitializer {
                                     params.setImage_id((Integer)out.get("id"));
                                     params.setCreation_date((String)out.get("creation_date").toString());
                                     params.setImage_title((String)out.get("image_title"));
-                                    params.setSessionimage((String)out.get("session_image"));
+                                    params.setSession_image((String)out.get("session_image"));
 
 
                                     
@@ -441,18 +442,20 @@ public class Application extends SpringBootServletInitializer {
                             InputStream clone1 = clone_omar(iso);
                             String theString = IOUtils.toString(cloned, "UTF-8");
 
-                            MultiPartStringParser test = new MultiPartStringParser(theString);
                             MimeBodyPart mimeMessage1 = new MimeBodyPart(clone1);
                             DataHandler dro = mimeMessage1.getDataHandler();
-                         //   String voice64 = test.getParameters().get("voice64");
-                            System.out.println("voice64ttttt " + dro.getContent());
-
+                         
                             InputStream myInputStream = new ByteArrayInputStream(
-                                    Base64.decodeBase64("" + dro.getContent()));
-                            // System.out.println("filename " + dro.getName());
-                            exchange.getIn().setBody(myInputStream);
+                                Base64.decodeBase64("" + dro.getContent()));
+                               System.out.println("base64 " + dro.getContent());
+                               exchange.getIn().setBody(myInputStream);
+                              
+                        
+                         
+                            MultiPartStringParser test = new MultiPartStringParser(theString);
+                         
 
-                            String class_name = test.getParameters().get("class_name");
+                           String class_name = test.getParameters().get("class_name");
                             String class_section = test.getParameters().get("class_section");
                             String class_id = test.getParameters().get("class_id");
                             String material_id = test.getParameters().get("material_id");
@@ -461,16 +464,24 @@ public class Application extends SpringBootServletInitializer {
                             String chapter_subject = test.getParameters().get("chapter_subject");
                             String chapter_number = test.getParameters().get("chapter_number");
                             String session_image = test.getParameters().get("session_image");
-                            String filename = dro.getName();
+                          //  String filename = dro.getName();
+                         
+                          System.out.println("voice64ttttt " + class_name+class_section+class_id+material_id+chapter_id+material_name+chapter_subject+chapter_number+session_image);
+                          String voice64 = test.getParameters().get("voice64");
+
+                         
                             String image_id = test.getParameters().get("image_id");
                             String image_title = test.getParameters().get("image_title");
+                            String voice_id = test.getParameters().get("voice_id");
+
                             String duration = test.getParameters().get("duration");
 
                             //voice_id
 
-                            String voice_id = test.getParameters().get("voice_id");
 
-
+                            String[] filename_split = voice_id.split("\\$");
+                            for (int i = 0; i < filename_split.length; i++)
+                                System.out.println("mambo\n " + i + " try " + filename_split[i]);
 
 
 
@@ -479,8 +490,8 @@ public class Application extends SpringBootServletInitializer {
 
                           
 
-                            exchange.getIn().setHeader("filename", filename);
-                            exchange.getIn().setHeader(Exchange.FILE_NAME, filename);
+                            exchange.getIn().setHeader("filename", voice_id);
+                            exchange.getIn().setHeader(Exchange.FILE_NAME, filename_split[1]);
 
                             exchange.getIn().setHeader("class_name", class_name);
                             exchange.getIn().setHeader("class_section", class_section);
@@ -523,12 +534,12 @@ public class Application extends SpringBootServletInitializer {
                             String results = exchange.getIn().getBody(String.class);
                             JSONArray jsonObject = new JSONArray(results);
                             // Map out=(Map) results.get(0);
-                            System.out.println(jsonObject.getJSONObject(0).getString("class_id"));
+                            System.out.println(jsonObject.getJSONObject(0).getInt("class_id"));
                             exchange.getIn().setHeader("class_id",
-                                    jsonObject.getJSONObject(0).getString("class_id"));
-                            exchange.getIn().setHeader("material_id", jsonObject.getJSONObject(0).getString("material_id"));
-                            exchange.getIn().setHeader("chapter_id", jsonObject.getJSONObject(0).getString("chapter_id"));
-                            exchange.getIn().setHeader("image_id", jsonObject.getJSONObject(0).getString("image_id"));
+                                    jsonObject.getJSONObject(0).getInt("class_id"));
+                            exchange.getIn().setHeader("material_id", jsonObject.getJSONObject(0).getInt("material_id"));
+                            exchange.getIn().setHeader("chapter_id", jsonObject.getJSONObject(0).getInt("chapter_id"));
+                            exchange.getIn().setHeader("image_id", jsonObject.getJSONObject(0).getInt("image_id"));
 
                             // exchange.getIn().setHeader("password", out.get("password"));
 
@@ -584,9 +595,9 @@ public class Application extends SpringBootServletInitializer {
                           String results = exchange.getIn().getBody(String.class);
                           JSONArray jsonObject = new JSONArray(results);
                           // Map out=(Map) results.get(0);
-                          System.out.println(jsonObject.getJSONObject(0).getString("instructor_id"));
+                          System.out.println(jsonObject.getJSONObject(0).getInt("instructor_id"));
                           exchange.getIn().setHeader("instructor_id",
-                                  jsonObject.getJSONObject(0).getString("instructor_id"));
+                                  jsonObject.getJSONObject(0).getInt("instructor_id"));
 
                           // exchange.getIn().setHeader("password", out.get("password"));
 
@@ -647,9 +658,9 @@ public class Application extends SpringBootServletInitializer {
                           String results = exchange.getIn().getBody(String.class);
                           JSONArray jsonObject = new JSONArray(results);
                           // Map out=(Map) results.get(0);
-                          System.out.println(jsonObject.getJSONObject(0).getString("class_id"));
+                          System.out.println(jsonObject.getJSONObject(0).getInt("class_id"));
                           exchange.getIn().setHeader("class_id",
-                                  jsonObject.getJSONObject(0).getString("class_id"));
+                                  jsonObject.getJSONObject(0).getInt("class_id"));
 
                           // exchange.getIn().setHeader("password", out.get("password"));
 
@@ -711,11 +722,11 @@ public class Application extends SpringBootServletInitializer {
                         String results = exchange.getIn().getBody(String.class);
                         JSONArray jsonObject = new JSONArray(results);
                         // Map out=(Map) results.get(0);
-                        System.out.println(jsonObject.getJSONObject(0).getString("class_id"));
+                        System.out.println(jsonObject.getJSONObject(0).getInt("class_id"));
                         exchange.getIn().setHeader("class_id",
-                                jsonObject.getJSONObject(0).getString("class_id"));
+                                jsonObject.getJSONObject(0).getInt("class_id"));
                                 exchange.getIn().setHeader("material_id",
-                                jsonObject.getJSONObject(0).getString("material_id"));
+                                jsonObject.getJSONObject(0).getInt("material_id"));
 
                         // exchange.getIn().setHeader("password", out.get("password"));
 
@@ -777,13 +788,13 @@ public class Application extends SpringBootServletInitializer {
                         String results = exchange.getIn().getBody(String.class);
                         JSONArray jsonObject = new JSONArray(results);
                         // Map out=(Map) results.get(0);
-                        System.out.println(jsonObject.getJSONObject(0).getString("foreign_instructor_id"));
+                        System.out.println(jsonObject.getJSONObject(0).getInt("foreign_instructor_id"));
                         exchange.getIn().setHeader("foreign_instructor_id",
-                                jsonObject.getJSONObject(0).getString("foreign_instructor_id"));
+                                jsonObject.getJSONObject(0).getInt("foreign_instructor_id"));
                                 exchange.getIn().setHeader("foreign_material_id",
-                                jsonObject.getJSONObject(0).getString("foreign_material_id"));
+                                jsonObject.getJSONObject(0).getInt("foreign_material_id"));
                                 exchange.getIn().setHeader("foreign_class_id",
-                                jsonObject.getJSONObject(0).getString("foreign_class_id")); 
+                                jsonObject.getJSONObject(0).getInt("foreign_class_id")); 
                                  exchange.getIn().setHeader("chapter_number",
                                 jsonObject.getJSONObject(0).getString("chapter_number")); 
                                  exchange.getIn().setHeader("chapter_subject",
@@ -842,11 +853,11 @@ public class Application extends SpringBootServletInitializer {
                             JSONArray jsonObject = new JSONArray(results);
                             // Map out=(Map) results.get(0);
                             // System.out.println(jsonObject.getJSONObject(0).getString("username"));
-                            String filename_split = jsonObject.getJSONObject(0).getString("voice_id");
+                            String [] filename_split = jsonObject.getJSONObject(0).getString("voice_id").split("\\$");
                             // for (int i = 0; i < filename_split.length; i++)
                             //     System.out.println("mambo\n " + i + " try " + filename_split[i]);
-                             exchange.getIn().setHeader("filename",filename_split
-                                     );
+                             exchange.getIn().setHeader("filename",filename_split[1]
+                                    );
                        //     exchange.getIn().setHeader("image_id", jsonObject.getJSONObject(0).getString("image_id"));
 
                             // exchange.getIn().setHeader("password", out.get("password"));
@@ -903,7 +914,7 @@ public class Application extends SpringBootServletInitializer {
 
                     Upload test = new Upload();
                     test.setMessage("Upload and move success");
-                    test.setStatus("success");
+                    test.setSuccess(true);
 
                     exchange.getIn().setBody(test);
 

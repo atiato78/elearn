@@ -1,22 +1,22 @@
 package io.fabric8.quickstarts.camel.login;
 
+import java.util.ArrayList;
 
-import io.fabric8.quickstarts.camel.login.Params;
 
 public class Result {
   
-    private Params  params;
+    private  ArrayList <io.fabric8.quickstarts.camel.login.Params>  params;
     private String status;
   
    // Getter Methods 
   
-    public Params getResult() {
+    public ArrayList <io.fabric8.quickstarts.camel.login.Params> getResult() {
       return params;
     }
   
    // Setter Methods 
   
-    public  void setResult(Params params) {
+    public  void setResult(ArrayList <io.fabric8.quickstarts.camel.login.Params> params) {
       this.params = params;
     }
 
