@@ -866,9 +866,17 @@ public class Application extends SpringBootServletInitializer {
                     }).log("${header.voice_id}")//.log("${header.session_title}")
                   //  .to("sql:select session_voice from session_content_voice where session_title =:#${header.session_title} and foreign_session_image=:#${header.image_id}?"
                   //          + "dataSource=dataSource")
-                .log("${body}").pollEnrich()
-                    .simple("file:/Users/omar/Downloads/elearn?fileName=${header.filename}&noop=true").timeout(1000000)
+                .log("${body}")//.pollEnrich()
+                //    .simple("file:/Users/omar/Downloads/elearn?fileName=${header.filename}&noop=true").timeout(1000000)
                     // .marshal().base64()
+                    .process(new Processor() {
+                        public void process(Exchange exchange) throws Exception {
+                             File file = new File("/Users/omar/Downloads/elearn/"+exchange.getIn().getHeader("filename"));
+                            byte[] data = org.apache.commons.io.FileUtils.readFileToByteArray(file);
+
+                             exchange.getIn().setBody(data);
+                        }
+                    })
                     .process(new Processor() {
                         public void process(Exchange exchange) throws Exception {
                             InputStream Inputstream = exchange.getIn().getBody(InputStream.class);
