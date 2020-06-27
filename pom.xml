@@ -25,6 +25,18 @@
         <fabric8.maven.plugin.version>3.5.40</fabric8.maven.plugin.version>
         <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
+           <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <jdk.version>1.8</jdk.version>
+
+        <better-preconditions.version>0.1.1</better-preconditions.version>
+        <opensaml.version>2.6.4</opensaml.version>
+        <javaee-api.version>8.0</javaee-api.version>
+        <pojobuilder.version>4.2.2</pojobuilder.version>
+        <objenesis.version>3.0.1</objenesis.version>
+        <spring-security-saml2.version>1.0.3.RELEASE</spring-security-saml2.version>
+
+        
     </properties>
 
     <dependencyManagement>
@@ -96,7 +108,52 @@
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-sql-starter</artifactId>
         </dependency>
-        
+         <dependency>
+                <groupId>javax</groupId>
+                <artifactId>javaee-api</artifactId>
+                <version>${javaee-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.karneim</groupId>
+                <artifactId>pojobuilder</artifactId>
+                <version>${pojobuilder.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security.extensions</groupId>
+                <artifactId>spring-security-saml2-core</artifactId>
+                <version>${spring-security-saml2.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>xml-apis</groupId>
+                        <artifactId>xml-apis</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.opensaml</groupId>
+                <artifactId>opensaml</artifactId>
+                <version>${opensaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.choonchernlim</groupId>
+                <artifactId>better-preconditions</artifactId>
+                <version>${better-preconditions.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.objenesis</groupId>
+                <artifactId>objenesis</artifactId>
+                <version>${objenesis.version}</version>
+            </dependency>
+
+        <dependency>
+
+  <groupId>com.github.choonchernlim</groupId>
+  <artifactId>spring-security-adfs-saml2</artifactId>
+  <version>0.9.0</version>
+   <scope>system</scope>
+    <systemPath>${project.basedir}/target/spring-security-adfs-saml2-0.9.0.jar</systemPath>
+
+</dependency>
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
