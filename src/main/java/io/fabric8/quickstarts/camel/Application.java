@@ -119,7 +119,7 @@ public class Application extends SpringBootServletInitializer {
     }
 
     public static final String ACCOUNT_SID = "AC3ee681fcead38f95d83923cf18500a84";
-    public static final String AUTH_TOKEN = "f905b6ce66f9b022812498003b206c11";
+    public static final String AUTH_TOKEN = "d2125390cda8fdfee8df8d09fb0a507e";
 
     @Component
     class RestApi extends RouteBuilder {
@@ -154,14 +154,14 @@ public class Application extends SpringBootServletInitializer {
                     .log("${header.Body}").to("log:DEBUG?showBody=true&showHeaders=true").process(new Processor() {
                         public void process(Exchange exchange) throws Exception {
 
-                            Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
+                            /*Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
                             com.twilio.rest.api.v2010.account.Message message = com.twilio.rest.api.v2010.account.Message
-                                    .creator(new com.twilio.type.PhoneNumber("whatsapp:+9613001294"),
+                                    .creator(new com.twilio.type.PhoneNumber(exchange.getIn().getHeader("From").toString()),
                                             new com.twilio.type.PhoneNumber("whatsapp:+14155238886"),
-                                            "Hello, your app is being tested!")
+                                            "Hello, I'm echoing the message:: "+exchange.getIn().getHeader("Body").toString())
                                     .create();
 
-                            System.out.println(message.getSid());
+                            System.out.println(message.getSid());*/
 
                             // p test = new p();
 
@@ -181,7 +181,8 @@ public class Application extends SpringBootServletInitializer {
 
                             // exchange.getIn().setBody("<?xml version=\"1.0\" encoding=\"UTF-8\"
                             // standalone=\"yes\"?>" +
-                            // "<person><age>25</age><name>Post john</name></person>");
+                            // "<person><age>25</age><name>Post johon</name></person>");
+			    exchange.getIn().setHeader(Exchange.CONTENT_TYPE, MediaType.APPLICATION_XML);
                             exchange.getIn().setBody(
                                     "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>I got this messaage from Trial Twilio web hook and I'm sending an echo :::: "
                                             + exchange.getIn().getHeader("Body") + "</Message></Response>");
