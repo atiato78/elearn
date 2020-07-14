@@ -87,10 +87,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.twilio.Twilio;
 
 import io.fabric8.quickstarts.camel.instructor.Params;
 import io.fabric8.quickstarts.camel.pojo.Root;
-import io.fabric8.quickstarts.camel.pojo.UnAuthorize;
 import io.fabric8.quickstarts.camel.voice.Result;
 import io.fabric8.quickstarts.camel.voice.VoiceSession;
 
@@ -118,47 +118,64 @@ public class Application extends SpringBootServletInitializer {
         return servlet;
     }
 
+
+    public static final String ACCOUNT_SID = "AC3ee681fcead38f95d83923cf18500a84";
+    public static final String AUTH_TOKEN = "f905b6ce66f9b022812498003b206c11";
+
     @Component
     class RestApi extends RouteBuilder {
 
         @Override
         public void configure() {
 
-            onException(HttpOperationFailedException.class).handled(true).process(new Processor() {
-                @Override
-                public void process(Exchange exchange) throws Exception {
-                    // exchange.getIn().setBody("{Exception occured :"+ex.getMessage()+"}");
-                    UnAuthorize test = new UnAuthorize();
-                    test.setResult("You are UnAuthrized to access such API");
-                    exchange.getIn().setBody(test);
-                }
-            });
+            // onException(HttpOperationFailedException.class).handled(true).process(new Processor() {
+            //     @Override
+            //     public void process(Exchange exchange) throws Exception {
+            //         // exchange.getIn().setBody("{Exception occured :"+ex.getMessage()+"}");
+            //         UnAuthorize test = new UnAuthorize();
+            //         test.setResult("You are UnAuthrized to access such API");
+            //         exchange.getIn().setBody(test);
+            //     }
+            // });
 
             restConfiguration()
 
                     .contextPath("/camel-rest-sql").apiContextPath("/api-doc")
                     .apiProperty("api.title", "Camel REST API").apiProperty("api.version", "1.0")
-                    .apiProperty("cors", "true").apiContextRouteId("doc-api").enableCORS(true)
-                    .corsHeaderProperty("Access-Control-Allow-Headers",
-                            "Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers,CustomHeader1, CustomHeader2")
-                    .component("servlet").bindingMode(RestBindingMode.json);
+                    // .apiProperty("cors", "true").apiContextRouteId("doc-api").enableCORS(true)
+                    // .corsHeaderProperty("Access-Control-Allow-Headers",
+                    //         "Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers,CustomHeader1, CustomHeader2")
+                     .component("servlet").bindingMode(RestBindingMode.json);
 
-            rest("/").description("Exhange Rate REST service").get("drools/")
+            rest("/").description("Exhange Rate REST service").post("whatsapp/")
                     .description("The drools for specified currency").route().routeId("drools-rate-api")
+                    .log("${header.Body}")
                     .to("log:DEBUG?showBody=true&showHeaders=true").process(new Processor() {
                         public void process(Exchange exchange) throws Exception {
 
-                            p test = new p();
+
+                            Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
+                            com.twilio.rest.api.v2010.account.Message message = com.twilio.rest.api.v2010.account.Message.creator(
+                                    new com.twilio.type.PhoneNumber("whatsapp:+9613001294"),
+                                    new com.twilio.type.PhoneNumber("whatsapp:+14155238886"),
+                                    "Hello, your app is being tested!")
+                                .create();
+                    
+                            System.out.println(message.getSid());
+
+                            
+                           
+                         //   p test = new p();
 
                             // test.setName("Omar");
                             // test.setAge(80);
                             // test.setPrevious(false);
 
-                            test.setBilledAmount(170);
-                            test.setCreditHistory("Poor");
-                            test.setMemberType("Silver");
+                            // test.setBilledAmount(170);
+                            // test.setCreditHistory("Poor");
+                            // test.setMemberType("Silver");
 
-                            System.out.println("Arrived from Space jBPM");
+                      //      System.out.println("Arrived from Space jBPM");
 
                             // exchange.getIn().setBody("<?xml version=\"1.0\" encoding=\"UTF-8\"
                             // standalone=\"yes\"?>" +
@@ -167,7 +184,7 @@ public class Application extends SpringBootServletInitializer {
                             // exchange.getIn().setBody("<?xml version=\"1.0\" encoding=\"UTF-8\"
                             // standalone=\"yes\"?>" +
                             // "<person><age>25</age><name>Post john</name></person>");
-                            exchange.getIn().setBody(test);
+                            exchange.getIn().setBody("<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>I got this messaage from Trial Twilio web hook and I'm sending an echo :::: "+exchange.getIn().getHeader("Body")+"</Message></Response>");
 
                             // Person : {
                             // "id": 10,
@@ -176,312 +193,312 @@ public class Application extends SpringBootServletInitializer {
                             // }
 
                         }
-                    }).endRest()
+                    }).endRest();
                     
-                    .get("elearningapp/").description("The e-learning for specified currency").param()
-                    .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("elearning")
-                    .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
-                    .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
+                    // .get("elearningapp/").description("The e-learning for specified currency").param()
+                    // .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("elearning")
+                    // .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
+                    // .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
 
-                    // .marshal().json(JsonLibrary.Jackson,Params.class)
+                    // // .marshal().json(JsonLibrary.Jackson,Params.class)
 
-                    // .log("${body}")
+                    // // .log("${body}")
 
-                    .process(new Processor() {
-                        public void process(Exchange exchange) throws Exception {
-                            String results = exchange.getIn().getBody(String.class);
-                            JSONArray jsonObject = new JSONArray(results);
-                            // Map out=(Map) results.get(0);
-                            System.out.println(jsonObject.getJSONObject(0).getString("username"));
-                            exchange.getIn().setHeader("password", jsonObject.getJSONObject(0).getString("password"));
-                            exchange.getIn().setHeader("username", jsonObject.getJSONObject(0).getString("username"));
+                    // .process(new Processor() {
+                    //     public void process(Exchange exchange) throws Exception {
+                    //         String results = exchange.getIn().getBody(String.class);
+                    //         JSONArray jsonObject = new JSONArray(results);
+                    //         // Map out=(Map) results.get(0);
+                    //         System.out.println(jsonObject.getJSONObject(0).getString("username"));
+                    //         exchange.getIn().setHeader("password", jsonObject.getJSONObject(0).getString("password"));
+                    //         exchange.getIn().setHeader("username", jsonObject.getJSONObject(0).getString("username"));
 
-                            // exchange.getIn().setHeader("password", out.get("password"));
+                    //         // exchange.getIn().setHeader("password", out.get("password"));
 
-                        }
-                    }).log("${header.username}").log("${header.password}")
+                    //     }
+                    // }).log("${header.username}").log("${header.password}");
                    
-                    .to("sql:select u.id as user_id, u.name as user_name, u.username as user_username, u.status as user_status, u.logo, u.type as user_type, c.class_name, c.class_section, u.foreign_class_id from user u, classes c where u.username=:#${header.username} and password=:#${header.password} and u.foreign_class_id=c.id?"
-                            + "dataSource=dataSource")
+            //         .to("sql:select u.id as user_id, u.name as user_name, u.username as user_username, u.status as user_status, u.logo, u.type as user_type, c.class_name, c.class_section, u.foreign_class_id from user u, classes c where u.username=:#${header.username} and password=:#${header.password} and u.foreign_class_id=c.id?"
+            //                 + "dataSource=dataSource")
 
-                    .log("${body}").process(new Processor() {
-                        public void process(Exchange exchange) throws Exception {
-                            ArrayList results = exchange.getIn().getBody(ArrayList.class);
-                            System.out.println(results);
-                            io.fabric8.quickstarts.camel.login.Result output = new io.fabric8.quickstarts.camel.login.Result();
-                            ArrayList<io.fabric8.quickstarts.camel.login.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.login.Params>();
+            //         .log("${body}").process(new Processor() {
+            //             public void process(Exchange exchange) throws Exception {
+            //                 ArrayList results = exchange.getIn().getBody(ArrayList.class);
+            //                 System.out.println(results);
+            //                 io.fabric8.quickstarts.camel.login.Result output = new io.fabric8.quickstarts.camel.login.Result();
+            //                 ArrayList<io.fabric8.quickstarts.camel.login.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.login.Params>();
                             
-                            String response = null;
-                            if (!results.isEmpty()) {
-                                System.out.println("size"+results.size());
+            //                 String response = null;
+            //                 if (!results.isEmpty()) {
+            //                     System.out.println("size"+results.size());
 
-                                for (int i = 0; i < results.size(); i++) {
-                                    Map out = (Map) results.get(i);
-                                    io.fabric8.quickstarts.camel.login.Params params = new io.fabric8.quickstarts.camel.login.Params();
+            //                     for (int i = 0; i < results.size(); i++) {
+            //                         Map out = (Map) results.get(i);
+            //                         io.fabric8.quickstarts.camel.login.Params params = new io.fabric8.quickstarts.camel.login.Params();
                                   
-                                    params.setUser_id((Integer)out.get("user_id"));
-                                    exchange.getIn().setHeader("user_name", out.get("user_name"));
-                                    params.setUser_name((String)out.get("user_name"));
-                                    params.setUser_username((String)out.get("user_username"));
-                                    params.setUser_status((String)out.get("user_status"));
-                                    params.setUser_type((String)out.get("user_type"));
+            //                         params.setUser_id((Integer)out.get("user_id"));
+            //                         exchange.getIn().setHeader("user_name", out.get("user_name"));
+            //                         params.setUser_name((String)out.get("user_name"));
+            //                         params.setUser_username((String)out.get("user_username"));
+            //                         params.setUser_status((String)out.get("user_status"));
+            //                         params.setUser_type((String)out.get("user_type"));
                                     
-                                    params.setClass_name((String)out.get("class_name"));
-                                    params.setClass_section((String)out.get("class_section"));
-                                    params.setLogo((String)out.get("logo"));
-                                    params.setUser_class_id((Integer)out.get("foreign_class_id"));
+            //                         params.setClass_name((String)out.get("class_name"));
+            //                         params.setClass_section((String)out.get("class_section"));
+            //                         params.setLogo((String)out.get("logo"));
+            //                         params.setUser_class_id((Integer)out.get("foreign_class_id"));
 
 
     
     
-                                    exchange.getIn().setHeader("status", "success");
+            //                         exchange.getIn().setHeader("status", "success");
                                   
     
 
                                     
-                                    resulted.add(params);
+            //                         resulted.add(params);
 
 
-                                }
-                                output.setResult(resulted);
+            //                     }
+            //                     output.setResult(resulted);
 
-                                output.setStatus("success");
-                            }
-                            exchange.getIn().setBody(output);
+            //                     output.setStatus("success");
+            //                 }
+            //                 exchange.getIn().setBody(output);
 
                         
 
-                        }
-                    }).log("${body}").choice().when(body().isNotNull())
-                    .marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Result.class).log("${body}")
-                    .unmarshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Result.class)
+            //             }
+            //         }).log("${body}").choice().when(body().isNotNull())
+            //         .marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Result.class).log("${body}")
+            //         .unmarshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Result.class)
 
                     
                     
                     
                     
                     
-                    .end()
+            //         .end()
 
 
-                    .choice().when(simple("${header.status} != 'success'")).process(new Processor() {
+            //         .choice().when(simple("${header.status} != 'success'")).process(new Processor() {
 
-                        @Override
-                        public void process(Exchange exchange) throws Exception {
-                            // TODO Auto-generated method stub
-                            io.fabric8.quickstarts.camel.login.Result result= new io.fabric8.quickstarts.camel.login.Result();
-                          //  io.fabric8.quickstarts.camel.login.Params out = new io.fabric8.quickstarts.camel.login.Params();
-                            result.setResult(null);
-                            result.setStatus("failed");
-                            // JSONArray out1= new JSONArray();
-                            // out1.put(test);
-                            // exchange.getIn().setBody(out1.toString());
-                            exchange.getIn().setBody(result);
+            //             @Override
+            //             public void process(Exchange exchange) throws Exception {
+            //                 // TODO Auto-generated method stub
+            //                 io.fabric8.quickstarts.camel.login.Result result= new io.fabric8.quickstarts.camel.login.Result();
+            //               //  io.fabric8.quickstarts.camel.login.Params out = new io.fabric8.quickstarts.camel.login.Params();
+            //                 result.setResult(null);
+            //                 result.setStatus("failed");
+            //                 // JSONArray out1= new JSONArray();
+            //                 // out1.put(test);
+            //                 // exchange.getIn().setBody(out1.toString());
+            //                 exchange.getIn().setBody(result);
 
-                        }
-                    }).marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Result.class)
-                    .unmarshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Result.class)
+            //             }
+            //         }).marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Result.class)
+            //         .unmarshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.login.Result.class)
 
-                    .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
-                    .end()
+            //         .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
+            //         .end()
 
-                    /*
-                     * .process(new Processor() { public void process(Exchange exchange) throws
-                     * Exception {
-                     * 
-                     * Points test= (Points) exchange.getIn().getBody(Points.class);
-                     * 
-                     */
+            //         /*
+            //          * .process(new Processor() { public void process(Exchange exchange) throws
+            //          * Exception {
+            //          * 
+            //          * Points test= (Points) exchange.getIn().getBody(Points.class);
+            //          * 
+            //          */
 
-                    // System.out.println("number of Points"+test.getPoints());
+            //         // System.out.println("number of Points"+test.getPoints());
 
-                    // exchange.getIn().setBody("<?xml version=\"1.0\" encoding=\"UTF-8\"
-                    // standalone=\"yes\"?>" +
-                    // "<person><id>1</id><lastName>Atieh</lastName><firstName>Omar</firstName></person>");
+            //         // exchange.getIn().setBody("<?xml version=\"1.0\" encoding=\"UTF-8\"
+            //         // standalone=\"yes\"?>" +
+            //         // "<person><id>1</id><lastName>Atieh</lastName><firstName>Omar</firstName></person>");
 
-                    // exchange.getIn().setBody("<?xml version=\"1.0\" encoding=\"UTF-8\"
-                    // standalone=\"yes\"?>" +
-                    // "<person><age>25</age><name>Post john</name></person>");
-                    // exchange.getIn().setBody("number of loyalty Points added to Subscriber
-                    // 011-60-3-2168-5000 is "+test.getPoints());
+            //         // exchange.getIn().setBody("<?xml version=\"1.0\" encoding=\"UTF-8\"
+            //         // standalone=\"yes\"?>" +
+            //         // "<person><age>25</age><name>Post john</name></person>");
+            //         // exchange.getIn().setBody("number of loyalty Points added to Subscriber
+            //         // 011-60-3-2168-5000 is "+test.getPoints());
 
-                    // Person : {
-                    // "id": 10,
-                    // "firstName": "Omar",
-                    // "lastName": "Atieh"
-                    // }
+            //         // Person : {
+            //         // "id": 10,
+            //         // "firstName": "Omar",
+            //         // "lastName": "Atieh"
+            //         // }
 
-                    // }
-                    // })
-                    .endRest()
+            //         // }
+            //         // })
+            //         .endRest()
                     
                     
                     
-                    .get("getimagesforchapter/").description("The e-learning for specified currency").param()
-                    .name("data").type(RestParamType.query).dataType("String").endParam().route()
-                    .routeId("Getimagesforchapter ").to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
-                    .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
+            //         .get("getimagesforchapter/").description("The e-learning for specified currency").param()
+            //         .name("data").type(RestParamType.query).dataType("String").endParam().route()
+            //         .routeId("Getimagesforchapter ").to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
+            //         .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
 
-                    // .marshal().json(JsonLibrary.Jackson,Params.class)
+            //         // .marshal().json(JsonLibrary.Jackson,Params.class)
 
-                    // .log("${body}")
+            //         // .log("${body}")
 
-                    .process(new Processor() {
-                        public void process(Exchange exchange) throws Exception {
-                            String results = exchange.getIn().getBody(String.class);
-                            JSONArray jsonObject = new JSONArray(results);
-                            // Map out=(Map) results.get(0);
-                            System.out.println(jsonObject.getJSONObject(0).getInt("class_id"));
-                            exchange.getIn().setHeader("class_id",
-                                    jsonObject.getJSONObject(0).getInt("class_id"));
-                                    exchange.getIn().setHeader("material_id",
-                                    jsonObject.getJSONObject(0).getInt("material_id"));
-                                    exchange.getIn().setHeader("chapter_id",
-                                    jsonObject.getJSONObject(0).getInt("chapter_id"));
-                            // exchange.getIn().setHeader("username",
-                            // jsonObject.getJSONObject(0).getString("username"));
+            //         .process(new Processor() {
+            //             public void process(Exchange exchange) throws Exception {
+            //                 String results = exchange.getIn().getBody(String.class);
+            //                 JSONArray jsonObject = new JSONArray(results);
+            //                 // Map out=(Map) results.get(0);
+            //                 System.out.println(jsonObject.getJSONObject(0).getInt("class_id"));
+            //                 exchange.getIn().setHeader("class_id",
+            //                         jsonObject.getJSONObject(0).getInt("class_id"));
+            //                         exchange.getIn().setHeader("material_id",
+            //                         jsonObject.getJSONObject(0).getInt("material_id"));
+            //                         exchange.getIn().setHeader("chapter_id",
+            //                         jsonObject.getJSONObject(0).getInt("chapter_id"));
+            //                 // exchange.getIn().setHeader("username",
+            //                 // jsonObject.getJSONObject(0).getString("username"));
 
-                            // exchange.getIn().setHeader("password", out.get("password"));
+            //                 // exchange.getIn().setHeader("password", out.get("password"));
 
-                        }
-                    }).log("${header.session_title}")
-                    .to("sql:select * from session_content_images where foreign_class_id=:#${header.class_id} and foreign_material_id=:#${header.material_id} and foreign_chapter_id=:#${header.chapter_id} order by id desc?"
-                            + "dataSource=dataSource")
-                    .process(new Processor() {
-                        public void process(Exchange exchange) throws Exception {
-                            ArrayList results = exchange.getIn().getBody(ArrayList.class);
-                            System.out.println(results);
-                            io.fabric8.quickstarts.camel.Images.Result output = new io.fabric8.quickstarts.camel.Images.Result();
-                            ArrayList<io.fabric8.quickstarts.camel.Images.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.Images.Params>();
+            //             }
+            //         }).log("${header.session_title}")
+            //         .to("sql:select * from session_content_images where foreign_class_id=:#${header.class_id} and foreign_material_id=:#${header.material_id} and foreign_chapter_id=:#${header.chapter_id} order by id desc?"
+            //                 + "dataSource=dataSource")
+            //         .process(new Processor() {
+            //             public void process(Exchange exchange) throws Exception {
+            //                 ArrayList results = exchange.getIn().getBody(ArrayList.class);
+            //                 System.out.println(results);
+            //                 io.fabric8.quickstarts.camel.Images.Result output = new io.fabric8.quickstarts.camel.Images.Result();
+            //                 ArrayList<io.fabric8.quickstarts.camel.Images.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.Images.Params>();
                             
-                            String response = null;
-                            if (!results.isEmpty()) {
-                                System.out.println("size"+results.size());
+            //                 String response = null;
+            //                 if (!results.isEmpty()) {
+            //                     System.out.println("size"+results.size());
 
-                                for (int i = 0; i < results.size(); i++) {
-                                    Map out = (Map) results.get(i);
-                                    io.fabric8.quickstarts.camel.Images.Params params = new io.fabric8.quickstarts.camel.Images.Params();
-                                    params.setImage_id((Integer)out.get("id"));
-                                    params.setCreation_date((String)out.get("creation_date").toString());
-                                    params.setImage_title((String)out.get("image_title"));
-                                    params.setSession_image((String)out.get("session_image"));
+            //                     for (int i = 0; i < results.size(); i++) {
+            //                         Map out = (Map) results.get(i);
+            //                         io.fabric8.quickstarts.camel.Images.Params params = new io.fabric8.quickstarts.camel.Images.Params();
+            //                         params.setImage_id((Integer)out.get("id"));
+            //                         params.setCreation_date((String)out.get("creation_date").toString());
+            //                         params.setImage_title((String)out.get("image_title"));
+            //                         params.setSession_image((String)out.get("session_image"));
 
 
                                     
-                                    resulted.add(params);
+            //                         resulted.add(params);
 
 
-                                }
-                                output.setResult(resulted);
+            //                     }
+            //                     output.setResult(resulted);
 
-                                output.setStatus("success");
-                            }
-                            exchange.getIn().setBody(output);
+            //                     output.setStatus("success");
+            //                 }
+            //                 exchange.getIn().setBody(output);
 
-                        }
+            //             }
 
                         
-                    })
-                    .log("${body}").marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.Images.Result.class)
-                    .unmarshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.Images.Result.class)
-                    // .log("${header.password}")
-                    .endRest();
-            rest("/uploadimage").post().bindingMode(RestBindingMode.off).consumes("multipart/form-data").route()
-                    .routeId("upload_info")
+            //         })
+            //         .log("${body}").marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.Images.Result.class)
+            //         .unmarshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.Images.Result.class)
+            //         // .log("${header.password}")
+            //         .endRest();
+            // rest("/uploadimage").post().bindingMode(RestBindingMode.off).consumes("multipart/form-data").route()
+            //         .routeId("upload_info")
 
-                    .process(new Processor() {
-                        public void process(Exchange exchange) throws Exception {
+            //         .process(new Processor() {
+            //             public void process(Exchange exchange) throws Exception {
 
-                            InputStream iso = exchange.getIn().getBody(InputStream.class);
-                            InputStream cloned = clone_omar(iso);
-                            InputStream clone1 = clone_omar(iso);
-                            String theString = IOUtils.toString(cloned, "UTF-8");
+            //                 InputStream iso = exchange.getIn().getBody(InputStream.class);
+            //                 InputStream cloned = clone_omar(iso);
+            //                 InputStream clone1 = clone_omar(iso);
+            //                 String theString = IOUtils.toString(cloned, "UTF-8");
 
-                            MultiPartStringParser test = new MultiPartStringParser(theString);
-                            MimeBodyPart mimeMessage1 = new MimeBodyPart(clone1);
-                            DataHandler dro = mimeMessage1.getDataHandler();
+            //                 MultiPartStringParser test = new MultiPartStringParser(theString);
+            //                 MimeBodyPart mimeMessage1 = new MimeBodyPart(clone1);
+            //                 DataHandler dro = mimeMessage1.getDataHandler();
 
-                            System.out.println("filename " + dro.getName());
-                            exchange.getIn().setHeader(Exchange.FILE_NAME, dro.getName());
-                            exchange.getIn().setBody(dro.getInputStream());
+            //                 System.out.println("filename " + dro.getName());
+            //                 exchange.getIn().setHeader(Exchange.FILE_NAME, dro.getName());
+            //                 exchange.getIn().setBody(dro.getInputStream());
 
-                            String class_id = test.getParameters().get("class_id");
-                            String material_id = test.getParameters().get("material_id");
-                            String chapter_id = test.getParameters().get("chapter_id");
-                            String image_title = test.getParameters().get("image_title");
-                            System.out.println(String.format("Body Content-Type: \n  session_title %s\n image_title %s",
-                            class_id, material_id));
-                            exchange.getIn().setHeader("filename", dro.getName());
-                            exchange.getIn().setHeader("class_id", class_id);
-                            exchange.getIn().setHeader("image_title", image_title);
-                            exchange.getIn().setHeader("chapter_id", chapter_id);
-                            exchange.getIn().setHeader("material_id", material_id);
+            //                 String class_id = test.getParameters().get("class_id");
+            //                 String material_id = test.getParameters().get("material_id");
+            //                 String chapter_id = test.getParameters().get("chapter_id");
+            //                 String image_title = test.getParameters().get("image_title");
+            //                 System.out.println(String.format("Body Content-Type: \n  session_title %s\n image_title %s",
+            //                 class_id, material_id));
+            //                 exchange.getIn().setHeader("filename", dro.getName());
+            //                 exchange.getIn().setHeader("class_id", class_id);
+            //                 exchange.getIn().setHeader("image_title", image_title);
+            //                 exchange.getIn().setHeader("chapter_id", chapter_id);
+            //                 exchange.getIn().setHeader("material_id", material_id);
                             
 
-                            exchange.getIn().setBody(dro.getInputStream());
+            //                 exchange.getIn().setBody(dro.getInputStream());
 
-                        }
-                    })
+            //             }
+            //         })
 
-                    .to("file:/Users/omar/Downloads/elearn")
-                    .to("sql:insert into session_content_images (foreign_class_id,foreign_material_id,foreign_chapter_id,image_title,session_image) values "
-                            + "(:#${header.class_id} , :#${header.material_id},:#${header.chapter_id},:#${header.image_title},:#${header.filename})?"
-                            + "dataSource=dataSource")
-                    .to("direct:start")
+            //         .to("file:/Users/omar/Downloads/elearn")
+            //         .to("sql:insert into session_content_images (foreign_class_id,foreign_material_id,foreign_chapter_id,image_title,session_image) values "
+            //                 + "(:#${header.class_id} , :#${header.material_id},:#${header.chapter_id},:#${header.image_title},:#${header.filename})?"
+            //                 + "dataSource=dataSource")
+            //         .to("direct:start")
 
-                    .endRest();
+            //         .endRest();
 
-            rest("/uploadvoice").post().bindingMode(RestBindingMode.off).consumes("multipart/form-data").route()
-                    .routeId("upload_voice")
+            // rest("/uploadvoice").post().bindingMode(RestBindingMode.off).consumes("multipart/form-data").route()
+            //         .routeId("upload_voice")
 
-                    .process(new Processor() {
-                        public void process(Exchange exchange) throws Exception {
+            //         .process(new Processor() {
+            //             public void process(Exchange exchange) throws Exception {
 
-                            InputStream iso = exchange.getIn().getBody(InputStream.class);
-                            InputStream cloned = clone_omar(iso);
-                            InputStream clone1 = clone_omar(iso);
-                            String theString = IOUtils.toString(cloned, "UTF-8");
+            //                 InputStream iso = exchange.getIn().getBody(InputStream.class);
+            //                 InputStream cloned = clone_omar(iso);
+            //                 InputStream clone1 = clone_omar(iso);
+            //                 String theString = IOUtils.toString(cloned, "UTF-8");
 
-                            MimeBodyPart mimeMessage1 = new MimeBodyPart(clone1);
-                            DataHandler dro = mimeMessage1.getDataHandler();
+            //                 MimeBodyPart mimeMessage1 = new MimeBodyPart(clone1);
+            //                 DataHandler dro = mimeMessage1.getDataHandler();
                          
-                            InputStream myInputStream = new ByteArrayInputStream(
-                                Base64.decodeBase64("" + dro.getContent()));
-                               System.out.println("base64 " + dro.getContent());
-                               exchange.getIn().setBody(myInputStream);
+            //                 InputStream myInputStream = new ByteArrayInputStream(
+            //                     Base64.decodeBase64("" + dro.getContent()));
+            //                    System.out.println("base64 " + dro.getContent());
+            //                    exchange.getIn().setBody(myInputStream);
                               
                         
                          
-                            MultiPartStringParser test = new MultiPartStringParser(theString);
+            //                 MultiPartStringParser test = new MultiPartStringParser(theString);
                          
 
-                           String class_name = test.getParameters().get("class_name");
-                            String class_section = test.getParameters().get("class_section");
-                            String class_id = test.getParameters().get("class_id");
-                            String material_id = test.getParameters().get("material_id");
-                            String chapter_id = test.getParameters().get("chapter_id");
-                            String material_name = test.getParameters().get("material_name");
-                            String chapter_subject = test.getParameters().get("chapter_subject");
-                            String chapter_number = test.getParameters().get("chapter_number");
-                            String session_image = test.getParameters().get("session_image");
-                          //  String filename = dro.getName();
+            //                String class_name = test.getParameters().get("class_name");
+            //                 String class_section = test.getParameters().get("class_section");
+            //                 String class_id = test.getParameters().get("class_id");
+            //                 String material_id = test.getParameters().get("material_id");
+            //                 String chapter_id = test.getParameters().get("chapter_id");
+            //                 String material_name = test.getParameters().get("material_name");
+            //                 String chapter_subject = test.getParameters().get("chapter_subject");
+            //                 String chapter_number = test.getParameters().get("chapter_number");
+            //                 String session_image = test.getParameters().get("session_image");
+            //               //  String filename = dro.getName();
                          
-                          System.out.println("voice64ttttt " + class_name+class_section+class_id+material_id+chapter_id+material_name+chapter_subject+chapter_number+session_image);
-                          String voice64 = test.getParameters().get("voice64");
+            //               System.out.println("voice64ttttt " + class_name+class_section+class_id+material_id+chapter_id+material_name+chapter_subject+chapter_number+session_image);
+            //               String voice64 = test.getParameters().get("voice64");
 
                          
-                            String image_id = test.getParameters().get("image_id");
-                            String image_title = test.getParameters().get("image_title");
-                            String voice_id = test.getParameters().get("voice_id");
+            //                 String image_id = test.getParameters().get("image_id");
+            //                 String image_title = test.getParameters().get("image_title");
+            //                 String voice_id = test.getParameters().get("voice_id");
 
-                            String duration = test.getParameters().get("duration");
+            //                 String duration = test.getParameters().get("duration");
 
-                            //voice_id
+            //                 //voice_id
 
 
-                            String[] filename_split = voice_id.split("\\$");
-                            for (int i = 0; i < filename_split.length; i++)
-                                System.out.println("mambo\n " + i + " try " + filename_split[i]);
+            //                 String[] filename_split = voice_id.split("\\$");
+            //                 for (int i = 0; i < filename_split.length; i++)
+            //                     System.out.println("mambo\n " + i + " try " + filename_split[i]);
 
 
 
@@ -490,446 +507,446 @@ public class Application extends SpringBootServletInitializer {
 
                           
 
-                            exchange.getIn().setHeader("filename", voice_id);
-                            exchange.getIn().setHeader(Exchange.FILE_NAME, filename_split[1]);
+            //                 exchange.getIn().setHeader("filename", voice_id);
+            //                 exchange.getIn().setHeader(Exchange.FILE_NAME, filename_split[1]);
 
-                            exchange.getIn().setHeader("class_name", class_name);
-                            exchange.getIn().setHeader("class_section", class_section);
-                            exchange.getIn().setHeader("class_id", class_id);
+            //                 exchange.getIn().setHeader("class_name", class_name);
+            //                 exchange.getIn().setHeader("class_section", class_section);
+            //                 exchange.getIn().setHeader("class_id", class_id);
 
-                            exchange.getIn().setHeader("material_id", material_id);
-                            exchange.getIn().setHeader("chapter_id", chapter_id);
-                            exchange.getIn().setHeader("material_name", material_name);
+            //                 exchange.getIn().setHeader("material_id", material_id);
+            //                 exchange.getIn().setHeader("chapter_id", chapter_id);
+            //                 exchange.getIn().setHeader("material_name", material_name);
 
-                            exchange.getIn().setHeader("chapter_subject", chapter_subject);
-                            exchange.getIn().setHeader("chapter_number", chapter_number);
-                            exchange.getIn().setHeader("session_image", session_image);
+            //                 exchange.getIn().setHeader("chapter_subject", chapter_subject);
+            //                 exchange.getIn().setHeader("chapter_number", chapter_number);
+            //                 exchange.getIn().setHeader("session_image", session_image);
 
-                            exchange.getIn().setHeader("image_id", image_id);
-                            exchange.getIn().setHeader("image_title", image_title);
-                            exchange.getIn().setHeader("duration", duration);
-                            exchange.getIn().setHeader("voice_id", voice_id);
+            //                 exchange.getIn().setHeader("image_id", image_id);
+            //                 exchange.getIn().setHeader("image_title", image_title);
+            //                 exchange.getIn().setHeader("duration", duration);
+            //                 exchange.getIn().setHeader("voice_id", voice_id);
 
-                            // InputStream myInputStream = new
-                            // ByteArrayInputStream(Base64.decodeBase64(theString));
+            //                 // InputStream myInputStream = new
+            //                 // ByteArrayInputStream(Base64.decodeBase64(theString));
 
-                            // exchange.getIn().setBody(iso);//dro.getInputStream());
+            //                 // exchange.getIn().setBody(iso);//dro.getInputStream());
 
-                        }
-                    })
+            //             }
+            //         })
 
-                    .to("file:/Users/omar/Downloads/elearn")
-                    .to("sql:insert into session_content_voices (foreign_class_id,foreign_material_id,foreign_chapter_id,foreign_image_id,session_voice,duration) values "
-                            + "(:#${header.class_id} , :#${header.material_id},:#${header.chapter_id},:#${header.image_id},:#${header.filename},:#${header.duration})?"
-                            + "dataSource=dataSource")
+            //         .to("file:/Users/omar/Downloads/elearn")
+            //         .to("sql:insert into session_content_voices (foreign_class_id,foreign_material_id,foreign_chapter_id,foreign_image_id,session_voice,duration) values "
+            //                 + "(:#${header.class_id} , :#${header.material_id},:#${header.chapter_id},:#${header.image_id},:#${header.filename},:#${header.duration})?"
+            //                 + "dataSource=dataSource")
 
-                    .to("direct:start").endRest();
+            //         .to("direct:start").endRest();
 
-            rest("/getvoicesidforimage").get().bindingMode(RestBindingMode.off).produces("application/json").param()
-                    .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("Getvoicesidforimage")
-                    .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
-                    .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
-                    .process(new Processor() {
-                        public void process(Exchange exchange) throws Exception {
-                            String results = exchange.getIn().getBody(String.class);
-                            JSONArray jsonObject = new JSONArray(results);
-                            // Map out=(Map) results.get(0);
-                            System.out.println(jsonObject.getJSONObject(0).getInt("class_id"));
-                            exchange.getIn().setHeader("class_id",
-                                    jsonObject.getJSONObject(0).getInt("class_id"));
-                            exchange.getIn().setHeader("material_id", jsonObject.getJSONObject(0).getInt("material_id"));
-                            exchange.getIn().setHeader("chapter_id", jsonObject.getJSONObject(0).getInt("chapter_id"));
-                            exchange.getIn().setHeader("image_id", jsonObject.getJSONObject(0).getInt("image_id"));
+            // rest("/getvoicesidforimage").get().bindingMode(RestBindingMode.off).produces("application/json").param()
+            //         .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("Getvoicesidforimage")
+            //         .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
+            //         .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
+            //         .process(new Processor() {
+            //             public void process(Exchange exchange) throws Exception {
+            //                 String results = exchange.getIn().getBody(String.class);
+            //                 JSONArray jsonObject = new JSONArray(results);
+            //                 // Map out=(Map) results.get(0);
+            //                 System.out.println(jsonObject.getJSONObject(0).getInt("class_id"));
+            //                 exchange.getIn().setHeader("class_id",
+            //                         jsonObject.getJSONObject(0).getInt("class_id"));
+            //                 exchange.getIn().setHeader("material_id", jsonObject.getJSONObject(0).getInt("material_id"));
+            //                 exchange.getIn().setHeader("chapter_id", jsonObject.getJSONObject(0).getInt("chapter_id"));
+            //                 exchange.getIn().setHeader("image_id", jsonObject.getJSONObject(0).getInt("image_id"));
 
-                            // exchange.getIn().setHeader("password", out.get("password"));
+            //                 // exchange.getIn().setHeader("password", out.get("password"));
 
-                        }
-                    }).log("${header.session_title}")
-                    .to("sql:select * from session_content_voices where foreign_class_id=:#${header.class_id} and foreign_material_id=:#${header.material_id} and foreign_chapter_id=:#${header.chapter_id} and foreign_image_id=:#${header.image_id}?"
-                            + "dataSource=dataSource")
+            //             }
+            //         }).log("${header.session_title}")
+            //         .to("sql:select * from session_content_voices where foreign_class_id=:#${header.class_id} and foreign_material_id=:#${header.material_id} and foreign_chapter_id=:#${header.chapter_id} and foreign_image_id=:#${header.image_id}?"
+            //                 + "dataSource=dataSource")
 
-                    .process(new Processor() {
-                        public void process(Exchange exchange) throws Exception {
-                            ArrayList results = exchange.getIn().getBody(ArrayList.class);
-                            System.out.println(results);
-                            io.fabric8.quickstarts.camel.voice.Result output = new io.fabric8.quickstarts.camel.voice.Result();
-                            ArrayList<VoiceSession>  resulted = new ArrayList<VoiceSession>();
+            //         .process(new Processor() {
+            //             public void process(Exchange exchange) throws Exception {
+            //                 ArrayList results = exchange.getIn().getBody(ArrayList.class);
+            //                 System.out.println(results);
+            //                 io.fabric8.quickstarts.camel.voice.Result output = new io.fabric8.quickstarts.camel.voice.Result();
+            //                 ArrayList<VoiceSession>  resulted = new ArrayList<VoiceSession>();
                             
-                            String response = null;
-                            if (!results.isEmpty()) {
-                                System.out.println("size"+results.size());
+            //                 String response = null;
+            //                 if (!results.isEmpty()) {
+            //                     System.out.println("size"+results.size());
 
-                                for (int i = 0; i < results.size(); i++) {
-                                    Map out = (Map) results.get(i);
-                                    VoiceSession params = new VoiceSession();
-                                    params.setVoiceid((String)out.get("session_voice"));
-                                    params.setCreation_date((String)out.get("creation_date").toString());
-                                    params.setDuration((Integer)out.get("duration"));
+            //                     for (int i = 0; i < results.size(); i++) {
+            //                         Map out = (Map) results.get(i);
+            //                         VoiceSession params = new VoiceSession();
+            //                         params.setVoiceid((String)out.get("session_voice"));
+            //                         params.setCreation_date((String)out.get("creation_date").toString());
+            //                         params.setDuration((Integer)out.get("duration"));
 
-                                    System.out.println(""+params.getVoiceid()+params.getCreation_date());
+            //                         System.out.println(""+params.getVoiceid()+params.getCreation_date());
                                     
-                                    resulted.add(params);
+            //                         resulted.add(params);
 
 
-                                }
-                                output.setResult(resulted);
+            //                     }
+            //                     output.setResult(resulted);
 
-                                output.setStatus("success");
-                            }
-                            exchange.getIn().setBody(output);
+            //                     output.setStatus("success");
+            //                 }
+            //                 exchange.getIn().setBody(output);
 
-                        }
-                    })
-                    .marshal().json(JsonLibrary.Jackson, Result.class)
+            //             }
+            //         })
+            //         .marshal().json(JsonLibrary.Jackson, Result.class)
 
-                    .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
+            //         .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
 
-                  .endRest();
+            //       .endRest();
 
-                rest("/getintructorclassesandmaterials").get().bindingMode(RestBindingMode.off).produces("application/json").param()
-                  .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("getintructorclassesandmaterials")
-                  .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
-                  .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
-                  .process(new Processor() {
-                      public void process(Exchange exchange) throws Exception {
-                          String results = exchange.getIn().getBody(String.class);
-                          JSONArray jsonObject = new JSONArray(results);
-                          // Map out=(Map) results.get(0);
-                          System.out.println(jsonObject.getJSONObject(0).getInt("instructor_id"));
-                          exchange.getIn().setHeader("instructor_id",
-                                  jsonObject.getJSONObject(0).getInt("instructor_id"));
+            //     rest("/getintructorclassesandmaterials").get().bindingMode(RestBindingMode.off).produces("application/json").param()
+            //       .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("getintructorclassesandmaterials")
+            //       .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
+            //       .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
+            //       .process(new Processor() {
+            //           public void process(Exchange exchange) throws Exception {
+            //               String results = exchange.getIn().getBody(String.class);
+            //               JSONArray jsonObject = new JSONArray(results);
+            //               // Map out=(Map) results.get(0);
+            //               System.out.println(jsonObject.getJSONObject(0).getInt("instructor_id"));
+            //               exchange.getIn().setHeader("instructor_id",
+            //                       jsonObject.getJSONObject(0).getInt("instructor_id"));
 
-                          // exchange.getIn().setHeader("password", out.get("password"));
+            //               // exchange.getIn().setHeader("password", out.get("password"));
 
-                      }
-                  }).log("${header.instructor_id}")
-                  .to("sql:select m.id as material_id, m.material_name, m.lang, m.cover_image, c.id as class_id, c.class_name, c.class_section from materials m,classes c where m.id in (select foreign_material_id from materials_instructors where foreign_instructor_id=:#${header.instructor_id}) and c.id in (select foreign_class_id from materials_instructors where foreign_instructor_id=:#${header.instructor_id} and foreign_material_id=m.id)?"
-                          + "dataSource=dataSource")
+            //           }
+            //       }).log("${header.instructor_id}")
+            //       .to("sql:select m.id as material_id, m.material_name, m.lang, m.cover_image, c.id as class_id, c.class_name, c.class_section from materials m,classes c where m.id in (select foreign_material_id from materials_instructors where foreign_instructor_id=:#${header.instructor_id}) and c.id in (select foreign_class_id from materials_instructors where foreign_instructor_id=:#${header.instructor_id} and foreign_material_id=m.id)?"
+            //               + "dataSource=dataSource")
 
-                  .process(new Processor() {
-                      public void process(Exchange exchange) throws Exception {
-                        ArrayList results = exchange.getIn().getBody(ArrayList.class);
-                        System.out.println(results);
-                        io.fabric8.quickstarts.camel.instructor.Result output = new io.fabric8.quickstarts.camel.instructor.Result();
-                        ArrayList<io.fabric8.quickstarts.camel.instructor.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.instructor.Params>();
+            //       .process(new Processor() {
+            //           public void process(Exchange exchange) throws Exception {
+            //             ArrayList results = exchange.getIn().getBody(ArrayList.class);
+            //             System.out.println(results);
+            //             io.fabric8.quickstarts.camel.instructor.Result output = new io.fabric8.quickstarts.camel.instructor.Result();
+            //             ArrayList<io.fabric8.quickstarts.camel.instructor.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.instructor.Params>();
                         
-                        String response = null;
-                        if (!results.isEmpty()) {
-                            System.out.println("size"+results.size());
+            //             String response = null;
+            //             if (!results.isEmpty()) {
+            //                 System.out.println("size"+results.size());
 
-                            for (int i = 0; i < results.size(); i++) {
-                                Map out = (Map) results.get(i);
-                                io.fabric8.quickstarts.camel.instructor.Params params = new io.fabric8.quickstarts.camel.instructor.Params();
-                                params.setMaterial_id((Integer)out.get("material_id"));
-                                params.setMaterial_name((String)out.get("material_name"));
-                                params.setLang((String)out.get("lang"));
-                                params.setCover_image((String)out.get("cover_image"));
-                                params.setClass_id((Integer)out.get("class_id"));
+            //                 for (int i = 0; i < results.size(); i++) {
+            //                     Map out = (Map) results.get(i);
+            //                     io.fabric8.quickstarts.camel.instructor.Params params = new io.fabric8.quickstarts.camel.instructor.Params();
+            //                     params.setMaterial_id((Integer)out.get("material_id"));
+            //                     params.setMaterial_name((String)out.get("material_name"));
+            //                     params.setLang((String)out.get("lang"));
+            //                     params.setCover_image((String)out.get("cover_image"));
+            //                     params.setClass_id((Integer)out.get("class_id"));
 
-                                params.setClass_name((String)out.get("class_name"));
-                                params.setClass_section((String)out.get("class_section"));
+            //                     params.setClass_name((String)out.get("class_name"));
+            //                     params.setClass_section((String)out.get("class_section"));
 
-                                System.out.println(""+params.getClass_name()+params.getMaterial_name());
+            //                     System.out.println(""+params.getClass_name()+params.getMaterial_name());
                                 
-                                resulted.add(params);
+            //                     resulted.add(params);
 
 
-                            }
-                            output.setResult(resulted);
+            //                 }
+            //                 output.setResult(resulted);
 
-                            output.setStatus("success");
-                        }
-                        exchange.getIn().setBody(output);
+            //                 output.setStatus("success");
+            //             }
+            //             exchange.getIn().setBody(output);
 
-                      }
-                  })
-                  .log("${body}").marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.instructor.Result.class)
+            //           }
+            //       })
+            //       .log("${body}").marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.instructor.Result.class)
 
-                  .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
+            //       .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
 
-                .endRest();
+            //     .endRest();
 
-                      rest("/getstudentmaterials").get().bindingMode(RestBindingMode.off).produces("application/json").param()
-                  .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("Getstudentmaterials")
-                  .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
-                  .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
-                  .process(new Processor() {
-                      public void process(Exchange exchange) throws Exception {
-                          String results = exchange.getIn().getBody(String.class);
-                          JSONArray jsonObject = new JSONArray(results);
-                          // Map out=(Map) results.get(0);
-                          System.out.println(jsonObject.getJSONObject(0).getInt("class_id"));
-                          exchange.getIn().setHeader("class_id",
-                                  jsonObject.getJSONObject(0).getInt("class_id"));
+            //           rest("/getstudentmaterials").get().bindingMode(RestBindingMode.off).produces("application/json").param()
+            //       .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("Getstudentmaterials")
+            //       .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
+            //       .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
+            //       .process(new Processor() {
+            //           public void process(Exchange exchange) throws Exception {
+            //               String results = exchange.getIn().getBody(String.class);
+            //               JSONArray jsonObject = new JSONArray(results);
+            //               // Map out=(Map) results.get(0);
+            //               System.out.println(jsonObject.getJSONObject(0).getInt("class_id"));
+            //               exchange.getIn().setHeader("class_id",
+            //                       jsonObject.getJSONObject(0).getInt("class_id"));
 
-                          // exchange.getIn().setHeader("password", out.get("password"));
+            //               // exchange.getIn().setHeader("password", out.get("password"));
 
-                      }
-                  }).log("${header.instructor_id}")
-                  .to("sql:select m.id as material_id, m.material_name, m.lang, m.cover_image, u.id as instructor_id, u.name as instructor_name from materials m, user u, materials_instructors mi where m.id = mi.foreign_material_id and mi.foreign_class_id=:#${header.class_id} and u.id in (select foreign_instructor_id from materials_instructors where foreign_class_id=:#${header.class_id} and foreign_material_id=m.id)?"
-                          + "dataSource=dataSource")
+            //           }
+            //       }).log("${header.instructor_id}")
+            //       .to("sql:select m.id as material_id, m.material_name, m.lang, m.cover_image, u.id as instructor_id, u.name as instructor_name from materials m, user u, materials_instructors mi where m.id = mi.foreign_material_id and mi.foreign_class_id=:#${header.class_id} and u.id in (select foreign_instructor_id from materials_instructors where foreign_class_id=:#${header.class_id} and foreign_material_id=m.id)?"
+            //               + "dataSource=dataSource")
 
-                  .process(new Processor() {
-                      public void process(Exchange exchange) throws Exception {
-                        ArrayList results = exchange.getIn().getBody(ArrayList.class);
-                        System.out.println(results);
-                        io.fabric8.quickstarts.camel.materials.Result output = new io.fabric8.quickstarts.camel.materials.Result();
-                        ArrayList<io.fabric8.quickstarts.camel.materials.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.materials.Params>();
+            //       .process(new Processor() {
+            //           public void process(Exchange exchange) throws Exception {
+            //             ArrayList results = exchange.getIn().getBody(ArrayList.class);
+            //             System.out.println(results);
+            //             io.fabric8.quickstarts.camel.materials.Result output = new io.fabric8.quickstarts.camel.materials.Result();
+            //             ArrayList<io.fabric8.quickstarts.camel.materials.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.materials.Params>();
                         
-                        String response = null;
-                        if (!results.isEmpty()) {
-                            System.out.println("size"+results.size());
+            //             String response = null;
+            //             if (!results.isEmpty()) {
+            //                 System.out.println("size"+results.size());
 
-                            for (int i = 0; i < results.size(); i++) {
-                                Map out = (Map) results.get(i);
-                                io.fabric8.quickstarts.camel.materials.Params params = new io.fabric8.quickstarts.camel.materials.Params();
-                                params.setMaterial_id((Integer)out.get("material_id"));
-                                params.setMaterial_name((String)out.get("material_name"));
-                                params.setLang((String)out.get("lang"));
-                                params.setCover_image((String)out.get("cover_image"));
-                                params.setInstructor_id((Integer)out.get("instructor_id"));
+            //                 for (int i = 0; i < results.size(); i++) {
+            //                     Map out = (Map) results.get(i);
+            //                     io.fabric8.quickstarts.camel.materials.Params params = new io.fabric8.quickstarts.camel.materials.Params();
+            //                     params.setMaterial_id((Integer)out.get("material_id"));
+            //                     params.setMaterial_name((String)out.get("material_name"));
+            //                     params.setLang((String)out.get("lang"));
+            //                     params.setCover_image((String)out.get("cover_image"));
+            //                     params.setInstructor_id((Integer)out.get("instructor_id"));
 
-                                params.setInstructor_name((String)out.get("instructor_name"));
+            //                     params.setInstructor_name((String)out.get("instructor_name"));
 
-                                System.out.println(""+params.getInstructor_name()+params.getMaterial_name());
+            //                     System.out.println(""+params.getInstructor_name()+params.getMaterial_name());
                                 
-                                resulted.add(params);
+            //                     resulted.add(params);
 
 
-                            }
-                            output.setResult(resulted);
+            //                 }
+            //                 output.setResult(resulted);
 
-                            output.setStatus("success");
-                        }
-                        exchange.getIn().setBody(output);
+            //                 output.setStatus("success");
+            //             }
+            //             exchange.getIn().setBody(output);
 
-                      }
-                  })
-                  .log("${body}").marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.materials.Result.class)
+            //           }
+            //       })
+            //       .log("${body}").marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.materials.Result.class)
 
-                  .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
+            //       .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
 
-                .endRest();
+            //     .endRest();
 
 
 
-                rest("/getchapters").get().bindingMode(RestBindingMode.off).produces("application/json").param()
-                .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("Getchapters")
-                .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
-                .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
-                .process(new Processor() {
-                    public void process(Exchange exchange) throws Exception {
-                        String results = exchange.getIn().getBody(String.class);
-                        JSONArray jsonObject = new JSONArray(results);
-                        // Map out=(Map) results.get(0);
-                        System.out.println(jsonObject.getJSONObject(0).getInt("class_id"));
-                        exchange.getIn().setHeader("class_id",
-                                jsonObject.getJSONObject(0).getInt("class_id"));
-                                exchange.getIn().setHeader("material_id",
-                                jsonObject.getJSONObject(0).getInt("material_id"));
+            //     rest("/getchapters").get().bindingMode(RestBindingMode.off).produces("application/json").param()
+            //     .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("Getchapters")
+            //     .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
+            //     .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
+            //     .process(new Processor() {
+            //         public void process(Exchange exchange) throws Exception {
+            //             String results = exchange.getIn().getBody(String.class);
+            //             JSONArray jsonObject = new JSONArray(results);
+            //             // Map out=(Map) results.get(0);
+            //             System.out.println(jsonObject.getJSONObject(0).getInt("class_id"));
+            //             exchange.getIn().setHeader("class_id",
+            //                     jsonObject.getJSONObject(0).getInt("class_id"));
+            //                     exchange.getIn().setHeader("material_id",
+            //                     jsonObject.getJSONObject(0).getInt("material_id"));
 
-                        // exchange.getIn().setHeader("password", out.get("password"));
+            //             // exchange.getIn().setHeader("password", out.get("password"));
 
-                    }
-                }).log("${header.class_id}")
-                .to("sql:select * from chapters where foreign_material_id=:#${header.material_id}  and foreign_class_id=:#${header.class_id}  order by id asc?"
-                        + "dataSource=dataSource")
+            //         }
+            //     }).log("${header.class_id}")
+            //     .to("sql:select * from chapters where foreign_material_id=:#${header.material_id}  and foreign_class_id=:#${header.class_id}  order by id asc?"
+            //             + "dataSource=dataSource")
 
-                .process(new Processor() {
-                    public void process(Exchange exchange) throws Exception {
-                      ArrayList results = exchange.getIn().getBody(ArrayList.class);
-                      System.out.println(results);
-                      io.fabric8.quickstarts.camel.chapters.Result output = new io.fabric8.quickstarts.camel.chapters.Result();
-                      ArrayList<io.fabric8.quickstarts.camel.chapters.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.chapters.Params>();
+            //     .process(new Processor() {
+            //         public void process(Exchange exchange) throws Exception {
+            //           ArrayList results = exchange.getIn().getBody(ArrayList.class);
+            //           System.out.println(results);
+            //           io.fabric8.quickstarts.camel.chapters.Result output = new io.fabric8.quickstarts.camel.chapters.Result();
+            //           ArrayList<io.fabric8.quickstarts.camel.chapters.Params>  resulted = new ArrayList<io.fabric8.quickstarts.camel.chapters.Params>();
                       
-                      String response = null;
-                      if (!results.isEmpty()) {
-                          System.out.println("size"+results.size());
+            //           String response = null;
+            //           if (!results.isEmpty()) {
+            //               System.out.println("size"+results.size());
 
-                          for (int i = 0; i < results.size(); i++) {
-                              Map out = (Map) results.get(i);
-                              io.fabric8.quickstarts.camel.chapters.Params params = new io.fabric8.quickstarts.camel.chapters.Params();
-                              params.setChapter_id((Integer)out.get("id"));
-                              params.setChapter_number((String)out.get("chapter_number"));
-                       //       params.setLang((String)out.get("lang"));
-                              params.setChapter_subject((String)out.get("chapter_subject"));
-                              params.setInstructor_id((Integer)out.get("foreign_instructor_id"));
-                              params.setCreation_date((String)out.get("creation_date").toString());
-
-
+            //               for (int i = 0; i < results.size(); i++) {
+            //                   Map out = (Map) results.get(i);
+            //                   io.fabric8.quickstarts.camel.chapters.Params params = new io.fabric8.quickstarts.camel.chapters.Params();
+            //                   params.setChapter_id((Integer)out.get("id"));
+            //                   params.setChapter_number((String)out.get("chapter_number"));
+            //            //       params.setLang((String)out.get("lang"));
+            //                   params.setChapter_subject((String)out.get("chapter_subject"));
+            //                   params.setInstructor_id((Integer)out.get("foreign_instructor_id"));
+            //                   params.setCreation_date((String)out.get("creation_date").toString());
 
 
-                              System.out.println(""+params.getCreation_date());
+
+
+            //                   System.out.println(""+params.getCreation_date());
                               
-                              resulted.add(params);
+            //                   resulted.add(params);
 
 
-                          }
-                          output.setResult(resulted);
+            //               }
+            //               output.setResult(resulted);
 
-                          output.setStatus("success");
-                      }
-                      exchange.getIn().setBody(output);
+            //               output.setStatus("success");
+            //           }
+            //           exchange.getIn().setBody(output);
 
-                    }
-                })
-                .log("${body}").marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.chapters.Result.class)
+            //         }
+            //     })
+            //     .log("${body}").marshal().json(JsonLibrary.Jackson, io.fabric8.quickstarts.camel.chapters.Result.class)
 
-                .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
+            //     .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
 
-              .endRest();
+            //   .endRest();
 
-              rest("/createchapter").get().bindingMode(RestBindingMode.off).produces("application/json").param()
-                .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("Createchapter")
-                .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
-                .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
-                .process(new Processor() {
-                    public void process(Exchange exchange) throws Exception {
-                        String results = exchange.getIn().getBody(String.class);
-                        JSONArray jsonObject = new JSONArray(results);
-                        // Map out=(Map) results.get(0);
-                        System.out.println(jsonObject.getJSONObject(0).getInt("foreign_instructor_id"));
-                        exchange.getIn().setHeader("foreign_instructor_id",
-                                jsonObject.getJSONObject(0).getInt("foreign_instructor_id"));
-                                exchange.getIn().setHeader("foreign_material_id",
-                                jsonObject.getJSONObject(0).getInt("foreign_material_id"));
-                                exchange.getIn().setHeader("foreign_class_id",
-                                jsonObject.getJSONObject(0).getInt("foreign_class_id")); 
-                                 exchange.getIn().setHeader("chapter_number",
-                                jsonObject.getJSONObject(0).getString("chapter_number")); 
-                                 exchange.getIn().setHeader("chapter_subject",
-                                jsonObject.getJSONObject(0).getString("chapter_subject")); 
+            //   rest("/createchapter").get().bindingMode(RestBindingMode.off).produces("application/json").param()
+            //     .name("data").type(RestParamType.query).dataType("String").endParam().route().routeId("Createchapter")
+            //     .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
+            //     .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
+            //     .process(new Processor() {
+            //         public void process(Exchange exchange) throws Exception {
+            //             String results = exchange.getIn().getBody(String.class);
+            //             JSONArray jsonObject = new JSONArray(results);
+            //             // Map out=(Map) results.get(0);
+            //             System.out.println(jsonObject.getJSONObject(0).getInt("foreign_instructor_id"));
+            //             exchange.getIn().setHeader("foreign_instructor_id",
+            //                     jsonObject.getJSONObject(0).getInt("foreign_instructor_id"));
+            //                     exchange.getIn().setHeader("foreign_material_id",
+            //                     jsonObject.getJSONObject(0).getInt("foreign_material_id"));
+            //                     exchange.getIn().setHeader("foreign_class_id",
+            //                     jsonObject.getJSONObject(0).getInt("foreign_class_id")); 
+            //                      exchange.getIn().setHeader("chapter_number",
+            //                     jsonObject.getJSONObject(0).getString("chapter_number")); 
+            //                      exchange.getIn().setHeader("chapter_subject",
+            //                     jsonObject.getJSONObject(0).getString("chapter_subject")); 
                              
 
-                        // exchange.getIn().setHeader("password", out.get("password"));
+            //             // exchange.getIn().setHeader("password", out.get("password"));
 
-                    }
-                })
-                .to("sql:INSERT INTO chapters (foreign_instructor_id , foreign_material_id, foreign_class_id, chapter_number, chapter_subject) VALUES  "
-                            + "(:#${header.foreign_instructor_id} , :#${header.foreign_material_id},:#${header.foreign_class_id},:#${header.chapter_number},:#${header.chapter_subject} )?"
-                            + "dataSource=dataSource")
+            //         }
+            //     })
+            //     .to("sql:INSERT INTO chapters (foreign_instructor_id , foreign_material_id, foreign_class_id, chapter_number, chapter_subject) VALUES  "
+            //                 + "(:#${header.foreign_instructor_id} , :#${header.foreign_material_id},:#${header.foreign_class_id},:#${header.chapter_number},:#${header.chapter_subject} )?"
+            //                 + "dataSource=dataSource")
 
-                .process(new Processor() {
-                    public void process(Exchange exchange) throws Exception {
+            //     .process(new Processor() {
+            //         public void process(Exchange exchange) throws Exception {
 
-                        String state = "{" + "\"status\":\"success\"}";
+            //             String state = "{" + "\"status\":\"success\"}";
 
-                      exchange.getIn().setBody(state);
-                    }
-                })
-                .log("${body}").unmarshal().json(JsonLibrary.Jackson, Status.class)
-                .marshal().json(JsonLibrary.Jackson, Status.class)
+            //           exchange.getIn().setBody(state);
+            //         }
+            //     })
+            //     .log("${body}").unmarshal().json(JsonLibrary.Jackson, Status.class)
+            //     .marshal().json(JsonLibrary.Jackson, Status.class)
 
-             //   .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
+            //  //   .log("${body}").end().to("log:DEBUG?showBody=true&showHeaders=true")
 
-              .endRest();
+            //   .endRest();
 
 
 
-            rest("download/{filename}").get().produces(MediaType.APPLICATION_OCTET_STREAM_VALUE).route()
-                    .routeId("downloadFile")
-                    .process(new Processor() {
-                        public void process(Exchange exchange) throws Exception {
-                             File file = new File("/Users/omar/Downloads/elearn/"+exchange.getIn().getHeader("filename"));
-                            byte[] data = org.apache.commons.io.FileUtils.readFileToByteArray(file);
+            // rest("download/{filename}").get().produces(MediaType.APPLICATION_OCTET_STREAM_VALUE).route()
+            //         .routeId("downloadFile")
+            //         .process(new Processor() {
+            //             public void process(Exchange exchange) throws Exception {
+            //                  File file = new File("/Users/omar/Downloads/elearn/"+exchange.getIn().getHeader("filename"));
+            //                 byte[] data = org.apache.commons.io.FileUtils.readFileToByteArray(file);
 
-                             exchange.getIn().setBody(data);
-                        }
-                    })
-                  //  .to("file:/Users/omar/Downloads/elearn?fileName=${header.filename}&noop=true")
-                    .setHeader("Content-Disposition", simple("attachment;filename=${header.filename}")).endRest();
-            rest("getcontentvoice/").get().produces("application/json").param().name("data").type(RestParamType.query)
-                    .dataType("String").endParam().route().routeId("getvoicecontent")
-                    .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
-                    .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
+            //                  exchange.getIn().setBody(data);
+            //             }
+            //         })
+            //       //  .to("file:/Users/omar/Downloads/elearn?fileName=${header.filename}&noop=true")
+            //         .setHeader("Content-Disposition", simple("attachment;filename=${header.filename}")).endRest();
+            // rest("getcontentvoice/").get().produces("application/json").param().name("data").type(RestParamType.query)
+            //         .dataType("String").endParam().route().routeId("getvoicecontent")
+            //         .to("log:DEBUG?showBody=true&showHeaders=true").log("${header.data}")
+            //         .setBody(simple("${header.data}")).convertBodyTo(String.class).log("${body}")
 
-                    // .marshal().json(JsonLibrary.Jackson,Params.class)
+            //         // .marshal().json(JsonLibrary.Jackson,Params.class)
 
-                    // .log("${body}")
+            //         // .log("${body}")
 
-                    .process(new Processor() {
-                        public void process(Exchange exchange) throws Exception {
-                            String results = exchange.getIn().getBody(String.class);
-                            JSONArray jsonObject = new JSONArray(results);
-                            // Map out=(Map) results.get(0);
-                            // System.out.println(jsonObject.getJSONObject(0).getString("username"));
-                            String [] filename_split = jsonObject.getJSONObject(0).getString("voice_id").split("\\$");
-                            // for (int i = 0; i < filename_split.length; i++)
-                            //     System.out.println("mambo\n " + i + " try " + filename_split[i]);
-                             exchange.getIn().setHeader("filename",filename_split[1]
-                                    );
-                       //     exchange.getIn().setHeader("image_id", jsonObject.getJSONObject(0).getString("image_id"));
+            //         .process(new Processor() {
+            //             public void process(Exchange exchange) throws Exception {
+            //                 String results = exchange.getIn().getBody(String.class);
+            //                 JSONArray jsonObject = new JSONArray(results);
+            //                 // Map out=(Map) results.get(0);
+            //                 // System.out.println(jsonObject.getJSONObject(0).getString("username"));
+            //                 String [] filename_split = jsonObject.getJSONObject(0).getString("voice_id").split("\\$");
+            //                 // for (int i = 0; i < filename_split.length; i++)
+            //                 //     System.out.println("mambo\n " + i + " try " + filename_split[i]);
+            //                  exchange.getIn().setHeader("filename",filename_split[1]
+            //                         );
+            //            //     exchange.getIn().setHeader("image_id", jsonObject.getJSONObject(0).getString("image_id"));
 
-                            // exchange.getIn().setHeader("password", out.get("password"));
+            //                 // exchange.getIn().setHeader("password", out.get("password"));
 
-                        }
-                    }).log("${header.voice_id}")//.log("${header.session_title}")
-                  //  .to("sql:select session_voice from session_content_voice where session_title =:#${header.session_title} and foreign_session_image=:#${header.image_id}?"
-                  //          + "dataSource=dataSource")
-                .log("${body}")//.pollEnrich()
-                //    .simple("file:/Users/omar/Downloads/elearn?fileName=${header.filename}&noop=true").timeout(1000000)
-                    // .marshal().base64()
-                    .process(new Processor() {
-                        public void process(Exchange exchange) throws Exception {
-                             File file = new File("/Users/omar/Downloads/elearn/"+exchange.getIn().getHeader("filename"));
-                            byte[] data = org.apache.commons.io.FileUtils.readFileToByteArray(file);
+            //             }
+            //         }).log("${header.voice_id}")//.log("${header.session_title}")
+            //       //  .to("sql:select session_voice from session_content_voice where session_title =:#${header.session_title} and foreign_session_image=:#${header.image_id}?"
+            //       //          + "dataSource=dataSource")
+            //     .log("${body}")//.pollEnrich()
+            //     //    .simple("file:/Users/omar/Downloads/elearn?fileName=${header.filename}&noop=true").timeout(1000000)
+            //         // .marshal().base64()
+            //         .process(new Processor() {
+            //             public void process(Exchange exchange) throws Exception {
+            //                  File file = new File("/Users/omar/Downloads/elearn/"+exchange.getIn().getHeader("filename"));
+            //                 byte[] data = org.apache.commons.io.FileUtils.readFileToByteArray(file);
 
-                             exchange.getIn().setBody(data);
-                        }
-                    })
-                    .process(new Processor() {
-                        public void process(Exchange exchange) throws Exception {
-                            InputStream Inputstream = exchange.getIn().getBody(InputStream.class);
-                            byte[] bytes = IOUtils.toByteArray(Inputstream);
-                            String results = Base64.encodeBase64String(bytes);
-                            System.out.println(results);
+            //                  exchange.getIn().setBody(data);
+            //             }
+            //         })
+            //         .process(new Processor() {
+            //             public void process(Exchange exchange) throws Exception {
+            //                 InputStream Inputstream = exchange.getIn().getBody(InputStream.class);
+            //                 byte[] bytes = IOUtils.toByteArray(Inputstream);
+            //                 String results = Base64.encodeBase64String(bytes);
+            //                 System.out.println(results);
 
-                            String response = "{" + "\"result\":\"" + results + "\"," + "\"status\":\"" + "success"
-                                    + "\"" + "}";
+            //                 String response = "{" + "\"result\":\"" + results + "\"," + "\"status\":\"" + "success"
+            //                         + "\"" + "}";
 
-                            exchange.getIn().setBody(response);
+            //                 exchange.getIn().setBody(response);
 
-                        }
-                    }).log("${body}").unmarshal().json(JsonLibrary.Jackson, DownloadVoice.class).endRest();
-            rest("/multi/")
-                    // .produces("text/plain")
-                    .post().bindingMode(RestBindingMode.off).consumes("multipart/form-data")
+            //             }
+            //         }).log("${body}").unmarshal().json(JsonLibrary.Jackson, DownloadVoice.class).endRest();
+            // rest("/multi/")
+            //         // .produces("text/plain")
+            //         .post().bindingMode(RestBindingMode.off).consumes("multipart/form-data")
 
-                    .route().unmarshal().mimeMultipart().process((exchange) -> {
-                        // the body is now the first form field
-                        String contentType = exchange.getIn().getHeader(Exchange.CONTENT_TYPE, String.class);
-                        System.out.println(String.format("Body Content-Type: %s", contentType));
-                        // System.out.println(String.format("Body:\n%s",
-                        // exchange.getIn().getBody(String.class)));
+            //         .route().unmarshal().mimeMultipart().process((exchange) -> {
+            //             // the body is now the first form field
+            //             String contentType = exchange.getIn().getHeader(Exchange.CONTENT_TYPE, String.class);
+            //             System.out.println(String.format("Body Content-Type: %s", contentType));
+            //             // System.out.println(String.format("Body:\n%s",
+            //             // exchange.getIn().getBody(String.class)));
 
-                        // the first attachment is the second form field
-                        Map<String, DataHandler> attachments = exchange.getIn().getAttachments();
-                        System.out.println(String.format("Attachments: %s", attachments.size()));
-                        exchange.getIn().getAttachments().forEach((id, dh) -> {
-                            try {
-                                Object content = dh.getContent();
-                                System.out.println(String.format("%s %s %s %s\n%s", id, dh.getInputStream(),
-                                        dh.getContentType(), dh.getName(), content.toString()));
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+            //             // the first attachment is the second form field
+            //             Map<String, DataHandler> attachments = exchange.getIn().getAttachments();
+            //             System.out.println(String.format("Attachments: %s", attachments.size()));
+            //             exchange.getIn().getAttachments().forEach((id, dh) -> {
+            //                 try {
+            //                     Object content = dh.getContent();
+            //                     System.out.println(String.format("%s %s %s %s\n%s", id, dh.getInputStream(),
+            //                             dh.getContentType(), dh.getName(), content.toString()));
+            //                 } catch (IOException e) {
+            //                     e.printStackTrace();
+            //                 }
 
-                        });
-                    }).transform(constant("OK\n")).endRest();
+            //             });
+            //         }).transform(constant("OK\n")).endRest();
 
-            from("direct:start").routeId("test").process(new Processor() {
-                public void process(Exchange exchange) throws Exception {
+            // from("direct:start").routeId("test").process(new Processor() {
+            //     public void process(Exchange exchange) throws Exception {
 
-                    Upload test = new Upload();
-                    test.setMessage("Upload and move success");
-                    test.setSuccess(true);
+            //         Upload test = new Upload();
+            //         test.setMessage("Upload and move success");
+            //         test.setSuccess(true);
 
-                    exchange.getIn().setBody(test);
+            //         exchange.getIn().setBody(test);
 
-                }
-            }).marshal().json(JsonLibrary.Jackson, Upload.class).log("${body}");
+            //     }
+            // }).marshal().json(JsonLibrary.Jackson, Upload.class).log("${body}");
 
-            // .get("sumrevenue").description("The sum revenu for specified currency")
+            // // .get("sumrevenue").description("The sum revenu for specified currency")
             // .route().routeId("get-revenue-month")
             // .to("direct:Auth")
             // .to("sql:SELECT SERVICE_TYPE, CALL_DATE, REVENUE_MONTH, CALL_CLASS,
@@ -1190,12 +1207,12 @@ public class Application extends SpringBootServletInitializer {
         return "";
     }
 
-    @Bean(name = "dataSource")
-    @ConfigurationProperties(prefix = "spring.datasource")
-    public DataSource dataSource2() {
+    // @Bean(name = "dataSource")
+    // @ConfigurationProperties(prefix = "spring.datasource")
+    // public DataSource dataSource2() {
 
-        return DataSourceBuilder.create().build();
-    }
+    //     return DataSourceBuilder.create().build();
+    // }
 
     public InputStream clone_omar(final InputStream inputStream) {
         try {

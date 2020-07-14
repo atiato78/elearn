@@ -18,17 +18,29 @@ endpoints:
   health:
     enabled: true
 
+#server:
+ # port : 8084
+  #address : 0.0.0.0
+
 server:
-  port : 8084
+  ssl:
+    key-store: classpath:server.jks
+    key-store-password: mykeypass
+    key-store-type: jks
+    key-alias: alias
+    key-password: mykeypass
+  port: 8443
   address : 0.0.0.0
 
-spring:
+#spring:
 #   Spring JDBC configuration
-  datasource:
-    url:      jdbc:mysql://localhost:3306/elearn?serverTimezone=EST5EDT
-    username: root
-    password: Oa03216287@
-    defaultAutoCommit: true
+#  datasource:
+ #   url:      jdbc:mysql://localhost:3306/elearn?serverTimezone=EST5EDT
+ #   username: root
+  #  password: Oa03216287@
+ #   defaultAutoCommit: true
+ #   autoReconnect: true
+ #   useSSL: false
 
     
 #    spring:
