@@ -184,7 +184,7 @@ public class Application extends SpringBootServletInitializer {
                             // "<person><age>25</age><name>Post johon</name></person>");
 			    exchange.getIn().setHeader(Exchange.CONTENT_TYPE, MediaType.APPLICATION_XML);
                             exchange.getIn().setBody(
-                                    "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>I got this messaage from Trial Twilio web hook and I'm sending an echo :::: "
+                                    "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>Echo the Message from Web hook Microservice :\n"
                                             + exchange.getIn().getHeader("Body") + "</Message></Response>");
 
                             // Person : {
