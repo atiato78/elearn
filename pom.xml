@@ -108,7 +108,11 @@
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-sql-starter</artifactId>
         </dependency>
+<<<<<<< HEAD
       <!--   <dependency>
+=======
+         <dependency>
+>>>>>>> fe3becaf110be9b6343b1cc5867aab476579061e
                 <groupId>javax</groupId>
                 <artifactId>javaee-api</artifactId>
                 <version>${javaee-api.version}</version>
@@ -150,9 +154,16 @@
   <groupId>com.github.choonchernlim</groupId>
   <artifactId>spring-security-adfs-saml2</artifactId>
   <version>0.9.0</version>
+<<<<<<< HEAD
    
 
 </dependency>-->
+=======
+   <scope>system</scope>
+    <systemPath>${project.basedir}/target/spring-security-adfs-saml2-0.9.0.jar</systemPath>
+
+</dependency>
+>>>>>>> fe3becaf110be9b6343b1cc5867aab476579061e
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
