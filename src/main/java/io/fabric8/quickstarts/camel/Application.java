@@ -215,14 +215,7 @@ public class Application extends SpringBootServletInitializer {
 
                     //         // exchange.getIn().setHeader("password", out.get("password"));
 
-<<<<<<< HEAD
-                    //     }
-                    // }).log("${header.username}").log("${header.password}");
-=======
-                        }
-                    }).log("${header.username}").log("${header.password}");
->>>>>>> fe3becaf110be9b6343b1cc5867aab476579061e
-                   
+
             //         .to("sql:select u.id as user_id, u.name as user_name, u.username as user_username, u.status as user_status, u.logo, u.type as user_type, c.class_name, c.class_section, u.foreign_class_id from user u, classes c where u.username=:#${header.username} and password=:#${header.password} and u.foreign_class_id=c.id?"
             //                 + "dataSource=dataSource")
 
