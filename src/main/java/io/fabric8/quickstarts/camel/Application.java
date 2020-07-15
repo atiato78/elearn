@@ -182,10 +182,17 @@ public class Application extends SpringBootServletInitializer {
                             // exchange.getIn().setBody("<?xml version=\"1.0\" encoding=\"UTF-8\"
                             // standalone=\"yes\"?>" +
                             // "<person><age>25</age><name>Post johon</name></person>");
-			    exchange.getIn().setHeader(Exchange.CONTENT_TYPE, MediaType.APPLICATION_XML);
-                            exchange.getIn().setBody(
-                                    "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>Echo the Message from Web hook Microservice :\n"
-                                            + exchange.getIn().getHeader("Body") + "</Message></Response>");
+                exchange.getIn().setHeader(Exchange.CONTENT_TYPE, MediaType.APPLICATION_XML);
+                
+                String result = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>Your Remaining Qouta for the Data Bundle :\n 2.65GB for Subscriber " +exchange.getIn().getHeader("From")
+                + "</Message></Response>";
+
+                String error = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>Please Send QBundle to Query Bundles :\n"+"</Message></Response>";
+
+                if (exchange.getIn().getHeader("Body").toString().equals("QBundle"))
+                            exchange.getIn().setBody(result);
+                            else 
+                            exchange.getIn().setBody(error);
 
                             // Person : {
                             // "id": 10,
