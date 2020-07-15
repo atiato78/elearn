@@ -184,7 +184,7 @@ public class Application extends SpringBootServletInitializer {
                             // "<person><age>25</age><name>Post johon</name></person>");
                 exchange.getIn().setHeader(Exchange.CONTENT_TYPE, MediaType.APPLICATION_XML);
                 
-                String result = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>Your Remaining Qouta for the Data Bundle :\n2.65GB for Subscriber " +exchange.getIn().getHeader("From")
+                String result = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>Your Remaining Quota for the Data Bundle :\n"+(int)(Math.random()*100)+"GB for Subscriber " +exchange.getIn().getHeader("From")
                 + "</Message></Response>";
 
                 String error = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>Please Send QBundle to Query Bundles, Enjoy Our Service\n"+"</Message></Response>";
