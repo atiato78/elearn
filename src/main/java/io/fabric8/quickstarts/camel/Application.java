@@ -217,7 +217,7 @@ public class Application extends SpringBootServletInitializer {
                             String totalUnusedUnits = data.getString("totalUnusedUnits");
 
                             String freeunits="<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>You have total Balance "+totalBalance+"\n"+"Total Unused Mintues "+totalUnusedMinutes+
-                            "*\nTotal Unused Data "+totalUnusedGigabytes+"\nTotal Unused SMS "+totalUnusedSMSs+"\n</Message></Response>";
+                            "\nTotal Unused Data "+totalUnusedGigabytes+"\nTotal Unused SMS "+totalUnusedSMSs+"\n</Message></Response>";
 
                             
                             
