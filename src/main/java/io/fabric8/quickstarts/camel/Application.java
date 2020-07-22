@@ -121,8 +121,7 @@ public class Application extends SpringBootServletInitializer {
         return servlet;
     }
 
-    public static final String ACCOUNT_SID = "AC3ee681fcead38f95d83923cf18500a84";
-    public static final String AUTH_TOKEN = "d2125390cda8fdfee8df8d09fb0a507e";
+   
 
     @Component
     class RestApi extends RouteBuilder {
@@ -181,12 +180,26 @@ public class Application extends SpringBootServletInitializer {
 
                             JSONObject json=new JSONObject(output);
                               String token = json.getString("access_token");
-                              exchange.getIn().setHeader("Authorization", "Bearer "+token);
+                              exchange.getIn().setHeader("Authorization", token);
                             log.info("My Auth Header "+exchange.getIn().getHeader("Authorization"));
 
                         }
                     })
+                    .removeHeaders("Camel*")
+                    .setHeader(Exchange.HTTP_METHOD, constant(org.apache.camel.component.http.HttpMethods.GET))
+                    .setHeader(Exchange.HTTP_URI, constant("https://dc.segmatek.com/gateway/ecare/balance/query-balance"))
+                    .setHeader("CamelHttpUrl",constant("https://dc.segmatek.com/gateway/ecare/balance/query-balance"))
+                    .streamCaching()
 
+                   // .setHeader("Authorization",constant("Basic bWF0dGVsLWFwcDpwYXNzd29yZA=="))
+                    // .setHeader("username",constant("01028002222"))
+                    // .setHeader("password",constant("password"))
+                    .setHeader("Accept", constant("application/json"))
+                    .setHeader(Exchange.CONTENT_TYPE,constant("application/json"))
+                    .to("log:DEBUG?showBody=true&showHeaders=true")
+                    .setHeader(Exchange.HTTP_QUERY,simple("access_token="+"${header.Authorization}"))
+                    .to("https://dc.segmatek.com/gateway/ecare/balance/query-balance")
+                    .log("${body}")
                     .process(new Processor() {
                         public void process(Exchange exchange) throws Exception {
 
