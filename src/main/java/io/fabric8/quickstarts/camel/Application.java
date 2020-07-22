@@ -215,7 +215,7 @@ public class Application extends SpringBootServletInitializer {
                            JSONArray accounts= data.getJSONArray("accounts");
                            String resultMessage=null;
                            StringBuilder sb = new StringBuilder();
-                           sb.append("<Message>");
+                           sb.append("<Message>Your Available Services :\n");
                            for (int i=0 ; i <accounts.length();i++)
 
                            {
