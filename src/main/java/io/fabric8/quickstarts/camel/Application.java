@@ -213,12 +213,19 @@ public class Application extends SpringBootServletInitializer {
                             
                             
                            JSONArray accounts= data.getJSONArray("accounts");
+                           String resultMessage=null;
+                           StringBuilder sb = new StringBuilder();
 
                            for (int i=0 ; i <accounts.length();i++)
 
                            {
 
                             log.info("services"+accounts.getJSONObject(i).getString("name"));
+                            int t=i+1;
+
+                            resultMessage ="<Message>"+t+"-"+accounts.getJSONObject(i).getString("name")+"\n</Message>";
+                            sb.append(resultMessage);
+                            log.info(sb.toString());
 
                            }
 
@@ -264,12 +271,11 @@ public class Application extends SpringBootServletInitializer {
                             // "<person><age>25</age><name>Post johon</name></person>");
                 exchange.getIn().setHeader(Exchange.CONTENT_TYPE, MediaType.APPLICATION_XML);
                 
-                String result = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>Your Remaining Quota for the Data Bundle :\n"+(int)(Math.random()*100)+"GB for Subscriber " +exchange.getIn().getHeader("From")
-                + "</Message></Response>";
+                String result = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response>"+sb.toString()+"</Response>";
 
                 String error = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>Please Send QBundle to Query Bundles, Enjoy Our Service\n"+"</Message></Response>";
 
-                if (exchange.getIn().getHeader("Body").toString().equals("QBundle"))
+                if (exchange.getIn().getHeader("Body").toString().equals("QServices"))
                             exchange.getIn().setBody(result);
                             else 
                             exchange.getIn().setBody(error);
