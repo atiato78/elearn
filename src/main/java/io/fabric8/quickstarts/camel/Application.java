@@ -189,8 +189,6 @@ public class Application extends SpringBootServletInitializer {
                     .setHeader(Exchange.HTTP_METHOD, constant(org.apache.camel.component.http.HttpMethods.GET))
                     .setHeader(Exchange.HTTP_URI, constant("https://dc.segmatek.com/gateway/ecare/balance/query-balance"))
                     .setHeader("CamelHttpUrl",constant("https://dc.segmatek.com/gateway/ecare/balance/query-balance"))
-                    .streamCaching()
-
                    // .setHeader("Authorization",constant("Basic bWF0dGVsLWFwcDpwYXNzd29yZA=="))
                     // .setHeader("username",constant("01028002222"))
                     // .setHeader("password",constant("password"))
@@ -200,8 +198,41 @@ public class Application extends SpringBootServletInitializer {
                     .setHeader(Exchange.HTTP_QUERY,simple("access_token="+"${header.Authorization}"))
                     .to("https://dc.segmatek.com/gateway/ecare/balance/query-balance")
                     .log("${body}")
+                    .convertBodyTo(String.class)
                     .process(new Processor() {
                         public void process(Exchange exchange) throws Exception {
+     
+
+                            String output =   exchange.getIn().getBody(String.class);
+                            log.info("well "+exchange.getIn().getBody(String.class));
+
+
+                            JSONObject json=new JSONObject(output);
+                            JSONObject data = json.getJSONObject("data");
+                            
+                            
+                            
+                           JSONArray accounts= data.getJSONArray("accounts");
+
+                           for (int i=0 ; i <accounts.length();i++)
+
+                           {
+
+                            log.info("services"+accounts.getJSONObject(i).getString("name"));
+
+                           }
+
+
+
+                            
+                           
+                            
+                             // JSONObject out=new JSONObject(data);
+                          //    log.info("out "+exchange.getIn().getBody(String.class));
+
+
+                            //   exchange.getIn().setHeader("Authorization", token);
+                            // log.info("My Auth Header "+exchange.getIn().getHeader("Authorization"));
 
                             /*Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
                             com.twilio.rest.api.v2010.account.Message message = com.twilio.rest.api.v2010.account.Message
