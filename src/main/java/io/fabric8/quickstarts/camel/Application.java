@@ -273,7 +273,7 @@ public class Application extends SpringBootServletInitializer {
                 
                 String result = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response>"+sb.toString()+"</Response>";
 
-                String error = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>Please Send QBundle to Query Bundles, Enjoy Our Service\n"+"</Message></Response>";
+                String error = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>Please Send QServices to Query Bundles, Enjoy Our Service\n"+"</Message></Response>";
 
                 if (exchange.getIn().getHeader("Body").toString().equals("QServices"))
                             exchange.getIn().setBody(result);
