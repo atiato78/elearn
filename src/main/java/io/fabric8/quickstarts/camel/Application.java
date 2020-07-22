@@ -151,7 +151,24 @@ public class Application extends SpringBootServletInitializer {
 
             rest("/").description("Exhange Rate REST service").post("whatsapp/")
                     .description("The drools for specified currency").route().routeId("drools-rate-api")
-                    .log("${header.Body}").to("log:DEBUG?showBody=true&showHeaders=true").process(new Processor() {
+                    .log("${header.Body}").to("log:DEBUG?showBody=true&showHeaders=true")
+                    .removeHeaders("Camel*")
+                    .setHeader(Exchange.HTTP_METHOD, constant(org.apache.camel.component.http.HttpMethods.POST))
+                    .setHeader(Exchange.HTTP_URI, constant("https://dc.segmatek.com/gateway/auth/oauth/token"))
+                    .setHeader("CamelHttpUrl",constant("https://dc.segmatek.com/gateway/auth/oauth/token"))
+
+
+                    .setHeader("Authorization",constant("Basic bWF0dGVsLWFwcDpwYXNzd29yZA=="))
+                    // .setHeader("username",constant("01028002222"))
+                    // .setHeader("password",constant("password"))
+                    .setHeader("Accept", constant("application/json"))
+                    .setHeader(Exchange.CONTENT_TYPE,constant("application/x-www-form-urlencoded"))
+                    .setBody(constant("username=01028002222&password=password&grant_type=password"))
+                    .to("log:DEBUG?showBody=true&showHeaders=true")
+                    .to("https://dc.segmatek.com/gateway/auth/oauth/token")
+                    .log("${body}")
+
+                    .process(new Processor() {
                         public void process(Exchange exchange) throws Exception {
 
                             /*Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
