@@ -209,6 +209,16 @@ public class Application extends SpringBootServletInitializer {
 
                             JSONObject json=new JSONObject(output);
                             JSONObject data = json.getJSONObject("data");
+
+                            String totalBalance=data.getString("totalBalance");
+                            String totalUnusedMinutes = data.getString("totalUnusedMinutes");
+                            String totalUnusedGigabytes = data.getString("totalUnusedGigabytes");
+                            String totalUnusedSMSs = data.getString("totalUnusedSMSs");
+                            String totalUnusedUnits = data.getString("totalUnusedUnits");
+
+                            String freeunits="<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <Response><Message>You have total Balance "+totalBalance+"\n"+"Total Unused Mintues "+totalUnusedMinutes+
+                            "*\nTotal Unused Data "+totalUnusedGigabytes+"\nTotal Unused SMS "+totalUnusedSMSs+"\n</Message></Response>";
+
                             
                             
                             
@@ -277,8 +287,12 @@ public class Application extends SpringBootServletInitializer {
 
                 if (exchange.getIn().getHeader("Body").toString().equals("QServices"))
                             exchange.getIn().setBody(result);
+                            else if (exchange.getIn().getHeader("Body").toString().equals("Details"))
+                            exchange.getIn().setBody(freeunits);
                             else 
                             exchange.getIn().setBody(error);
+
+                            
 
                             // Person : {
                             // "id": 10,
