@@ -24,7 +24,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Date;
@@ -101,6 +103,7 @@ import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 @SpringBootApplication
 @ImportResource({ "classpath:spring/camel-context.xml" })
@@ -156,7 +159,7 @@ public class Application extends SpringBootServletInitializer {
                     .setHeader(Exchange.HTTP_METHOD, constant(org.apache.camel.component.http.HttpMethods.POST))
                     .setHeader(Exchange.HTTP_URI, constant("https://dc.segmatek.com/gateway/auth/oauth/token"))
                     .setHeader("CamelHttpUrl",constant("https://dc.segmatek.com/gateway/auth/oauth/token"))
-
+                    .streamCaching()
 
                     .setHeader("Authorization",constant("Basic bWF0dGVsLWFwcDpwYXNzd29yZA=="))
                     // .setHeader("username",constant("01028002222"))
@@ -167,6 +170,22 @@ public class Application extends SpringBootServletInitializer {
                     .to("log:DEBUG?showBody=true&showHeaders=true")
                     .to("https://dc.segmatek.com/gateway/auth/oauth/token")
                     .log("${body}")
+                  //  .convertBodyTo(String.class)
+
+                    .process(new Processor() {
+                        public void process(Exchange exchange) throws Exception {
+
+                        String output =   exchange.getIn().getBody(String.class);
+                            log.info("test "+exchange.getIn().getBody(String.class));
+
+
+                            JSONObject json=new JSONObject(output);
+                              String token = json.getString("access_token");
+                              exchange.getIn().setHeader("Authorization", "Bearer "+token);
+                            log.info("My Auth Header "+exchange.getIn().getHeader("Authorization"));
+
+                        }
+                    })
 
                     .process(new Processor() {
                         public void process(Exchange exchange) throws Exception {
@@ -221,6 +240,15 @@ public class Application extends SpringBootServletInitializer {
                     }).endRest();
 
         }
+
+    }
+
+    private static String convertInputStreamToStringCommonIO(InputStream inputStream)
+	throws IOException {
+
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(inputStream, writer, StandardCharsets.UTF_8);
+        return writer.toString();
 
     }
 }
