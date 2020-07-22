@@ -228,7 +228,7 @@ public class Application extends SpringBootServletInitializer {
                             log.info(sb.toString());
 
                            }
-                           sb.append("</Message>");
+                           sb.append("Please Send *Details* to get Free Units</Message>");
 
 
                             
