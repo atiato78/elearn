@@ -215,7 +215,7 @@ public class Application extends SpringBootServletInitializer {
                            JSONArray accounts= data.getJSONArray("accounts");
                            String resultMessage=null;
                            StringBuilder sb = new StringBuilder();
-
+                           sb.append("<Message>");
                            for (int i=0 ; i <accounts.length();i++)
 
                            {
@@ -223,12 +223,12 @@ public class Application extends SpringBootServletInitializer {
                             log.info("services"+accounts.getJSONObject(i).getString("name"));
                             int t=i+1;
 
-                            resultMessage ="<Message>"+t+"-"+accounts.getJSONObject(i).getString("name")+"\n</Message>";
+                            resultMessage =t+"-"+accounts.getJSONObject(i).getString("name")+"\n";
                             sb.append(resultMessage);
                             log.info(sb.toString());
 
                            }
-
+                           sb.append("</Message>");
 
 
                             
